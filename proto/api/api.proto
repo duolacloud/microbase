@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package rpc;
+
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/duolacloud/microbase/proto/api;api";
+
+
+message Status {
+	int32 code = 1;
+  string Message = 2;
+	repeated google.protobuf.Any Details = 3;
+}

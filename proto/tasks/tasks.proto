@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package tasks;
+
+
+import public "google/protobuf/timestamp.proto";
+import public "google/protobuf/duration.proto";
+import "github.com/duolacloud/microbase/proto/api/api.proto";
+
+option go_package = "github.com/duolacloud/microbase/proto/tasks;tasks";
+
+service TaskService {
+  rpc Create(CreateTaskRequest) returns (CreateTaskResponse) {}
+  rpc Update(UpdateTaskRequest) returns (UpdateTaskResponse) {}
+  rpc Get(GetTaskRequest) returns (GetTasksResponse) {}
+  rpc Delete(UpdateTaskRequest) returns (UpdateTaskResponse) {}
+  rpc List(ListTasksRequest) returns (ListTasksResponse) {}
+}
+
+message CreateTaskRequest {
+  string parent = 1;
+  Task task = 2;
+  ResponseView responseView = 3;
+}
+
+message CreateTaskResponse {
+
+}
+
+message GetTaskRequest {
+
+}
+
+message GetTasksResponse {
+
+}
+
+message UpdateTaskRequest {
+
+}
+
+message UpdateTaskResponse {
+
+}
+
+message ListTasksRequest {
+
+}
+
+message ListTasksResponse {
+}
+
+message ResponseView {
+
+}
+
+message Task {
+  enum View {
+    UNSPECIFIED = 0;
+    BASIC = 1;
+    FULL = 2;
+  }
+
+  string name = 1;
+  PayloadType payloadType = 2;
+  google.protobuf.Timestamp ScheduleTime = 3;
+  google.protobuf.Timestamp CreateTime = 4;
+  google.protobuf.Duration DispatchDeadline = 5;
+  int32 DispatchCount = 6;
+  int32 ResponseCount = 7;
+  Attempt FirstAttempt = 8;
+  Attempt LastAttempt = 9;
+  View View1 = 10;
+}
+
+enum PayloadType {
+  HttpRequest = 0;
+  PullMessage = 1;
+}
+
+message Attempt {
+  google.protobuf.Timestamp ScheduleTime = 1;
+  google.protobuf.Timestamp DispatchTime = 2;
+  google.protobuf.Timestamp ResponseTime = 3;
+  // ResponseStatus status.Status = 4;
+}
