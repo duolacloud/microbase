@@ -191,9 +191,9 @@ func (r *BaseRepository) List(c context.Context, query *model.CursorQuery, m mod
 
 	var hasPrevious bool
 	var hasNext bool
-	if query.Direction == model.Direction_ASC {
+	if query.Direction == 1 {
 		hasNext = count == query.Size
-	} else if query.Direction == model.Direction_DSC {
+	} else if query.Direction == 0 {
 		hasPrevious = count == query.Size
 	}
 

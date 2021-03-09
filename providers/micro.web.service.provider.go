@@ -5,14 +5,26 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/micro/go-micro/v2/registry"
 	"github.com/micro/go-micro/v2/web"
-	_ "github.com/micro/go-plugins/registry/consul/v2"
+	"github.com/micro/go-plugins/registry/consul/v2"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/fx"
 )
 
 func NewMicroWebService(c *cli.Context) web.Service {
+	serviceName := c.String("service_name")
+	serviceVersion := c.String("service_version")
+	registryAddress := c.StringSlice("registry_address")
+
+	reg := consul.NewRegistry(func(op *registry.Options) {
+		op.Addrs = registryAddress
+	})
+
 	return web.NewService(
+		web.Name(serviceName),
+		web.Version(serviceVersion),
+		web.Registry(reg),
 		web.RegisterTTL(time.Minute),
 		web.RegisterInterval(time.Second*30),
 	)

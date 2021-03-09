@@ -8,9 +8,9 @@ import (
 
 	"github.com/micro/go-plugins/registry/consul/v2"
 
+	xxxmicro_opentracing "github.com/duolacloud/microbase/opentracing"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	xopentracing "github.com/micro/go-plugins/wrapper/trace/opentracing/v2"
-	xxxmicro_opentracing "github.com/xxxmicro/base/opentracing"
 
 	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/uber/v2"
 	"github.com/micro/go-plugins/wrapper/validator/v2"

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/duolacloud/microbase/database"
 	"github.com/duolacloud/microbase/database/gorm/opentracing"
 	"github.com/duolacloud/microbase/multitenancy"
 	_ "github.com/go-sql-driver/mysql"
@@ -14,7 +15,7 @@ import (
 	"github.com/micro/go-micro/v2/config"
 )
 
-func NewGormTenancy(config config.Config) (multitenancy.Tenancy, error) {
+func NewGormTenancy(config config.Config, entityMap database.EntityMap) (multitenancy.Tenancy, error) {
 	driver := config.Get("db", "driver").String("")
 	connectionString := config.Get("db", "connection_string").String("")
 
@@ -30,6 +31,8 @@ func NewGormTenancy(config config.Config) (multitenancy.Tenancy, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer masterDB.Close()
+
 	masterDB.LogMode(true)
 	masterDB.DB().SetMaxIdleConns(1)
 	masterDB.DB().SetConnMaxLifetime(3 * time.Minute)
@@ -43,7 +46,6 @@ func NewGormTenancy(config config.Config) (multitenancy.Tenancy, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer db.Close()
 
 		// defer db.Close()
 		db.LogMode(true)
@@ -53,6 +55,8 @@ func NewGormTenancy(config config.Config) (multitenancy.Tenancy, error) {
 		addAutoCallbacks(db)
 
 		opentracing.AddGormCallbacks(db)
+
+		autoMigrate(entityMap, db)
 		return db, nil
 	}
 
@@ -121,11 +125,10 @@ func updateTimeForUpdateCallback(scope *gorm.Scope) {
 	}
 }
 
-func autoMigrate(ctx context.Context, db *gorm.DB) error {
+func autoMigrate(entityMap database.EntityMap, db *gorm.DB) error {
 	// ctx, span := trace.StartSpan(ctx, "tenancy.Migrate")
 	// defer span.End()
-	entities := ctx.Value("entities").([]interface{})
-
+	entities := entityMap.GetEntities()
 	if db = db.AutoMigrate(entities...); db.Error != nil {
 		// TODO m.logger.For(ctx).Error("tenancy migrate", zap.Error(err))
 		// span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})

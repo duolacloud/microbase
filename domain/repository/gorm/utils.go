@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/logger"
 	"github.com/duolacloud/microbase/types/smarttime"
 	_gorm "github.com/jinzhu/gorm"
 )
@@ -24,6 +25,7 @@ func FindField(name string, ms *_gorm.ModelStruct, dbHandler *_gorm.DB) (*_gorm.
 		for _, field := range ms.StructFields {
 			fieldName := field.Tag.Get("json")
 			fieldsMap[fieldName] = field
+			logger.Infof("fieldName: %s", fieldName)
 		}
 
 		fieldsCache[tableName] = fieldsMap
