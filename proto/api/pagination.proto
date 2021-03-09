@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "github.com/duolacloud/proto/api;api";
+
+enum SortDirection {
+  ASC = 0;
+  DSC = 1;
+}
+
+message SortOption {
+  string field = 1;
+  SortDirection direction = 2;
+}
+
+message PageInfo {
+  int64 total = 1;
+  bool hasNext = 2;
+  bool hasPrevious =3;
+  string startCursor = 4;
+  string endCursor = 5;
+}

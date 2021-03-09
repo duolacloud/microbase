@@ -1,7 +1,7 @@
 GOPATH:=$(shell go env GOPATH)
 PROTO_FLAGS=--go_opt=paths=source_relative --micro_opt=paths=source_relative
-PROTO_PATH=$(GOPATH)/src:.
-SRC_DIR=$(GOPATH)/src
+PROTO_PATH=.
+SRC_DIR=.
 
 
 

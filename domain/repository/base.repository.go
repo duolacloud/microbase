@@ -20,7 +20,7 @@ type BaseRepository interface {
 
 	Update(c context.Context, m model.Model, change interface{}) error
 
-	FindOne(c context.Context, m model.Model) error
+	Get(c context.Context, m model.Model) error
 
 	// 翻页查询
 	// query: 查询条件
@@ -36,5 +36,5 @@ type BaseRepository interface {
 	// @query	查询条件
 	// m	数据指针，仅用于帮助推导数据类型
 	// resultPtr	返回数据的指针
-	Cursor(c context.Context, query *model.CursorQuery, m model.Model, resultPtr interface{}) (cursor *model.CursorExtra, err error)
+	List(c context.Context, query *model.CursorQuery, m model.Model, resultPtr interface{}) (cursor *model.CursorExtra, err error)
 }

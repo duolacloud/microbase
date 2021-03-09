@@ -5,29 +5,47 @@ import (
 	"errors"
 	"fmt"
 
-	_gorm "github.com/jinzhu/gorm"
 	"github.com/duolacloud/microbase/database/gorm/opentracing"
 	"github.com/duolacloud/microbase/domain/model"
 	"github.com/duolacloud/microbase/domain/repository"
 	breflect "github.com/duolacloud/microbase/reflect"
+	_gorm "github.com/jinzhu/gorm"
 )
 
 type BaseRepository struct {
-	DB *_gorm.DB
+	DBProvider repository.DBProvider
 }
 
-func NewBaseRepository(db *_gorm.DB) repository.BaseRepository {
-	return &BaseRepository{db}
+func NewBaseRepository(provider repository.DBProvider) repository.BaseRepository {
+	return &BaseRepository{provider}
+}
+
+func (r *BaseRepository) db(c context.Context) (*_gorm.DB, error) {
+	db, err := r.DBProvider.Provide(c)
+	if err != nil {
+		return nil, err
+	}
+	return db.(*_gorm.DB), nil
 }
 
 func (r *BaseRepository) Create(c context.Context, m model.Model) error {
-	db := opentracing.SetSpanToGorm(c, r.DB)
+	db, err := r.db(c)
+	if err != nil {
+		return err
+	}
+
+	db = opentracing.SetSpanToGorm(c, db)
 
 	return db.Create(m).Error
 }
 
 func (r *BaseRepository) Upsert(c context.Context, m model.Model) (*repository.ChangeInfo, error) {
-	db := opentracing.SetSpanToGorm(c, r.DB)
+	db, err := r.db(c)
+	if err != nil {
+		return nil, err
+	}
+
+	db = opentracing.SetSpanToGorm(c, db)
 
 	result := db.Save(m)
 	if result.Error != nil {
@@ -41,10 +59,15 @@ func (r *BaseRepository) Upsert(c context.Context, m model.Model) (*repository.C
 }
 
 func (r *BaseRepository) Update(c context.Context, m model.Model, data interface{}) error {
-	db := opentracing.SetSpanToGorm(c, r.DB)
+	db, err := r.db(c)
+	if err != nil {
+		return err
+	}
+
+	db = opentracing.SetSpanToGorm(c, db)
 
 	// 主键保护，如果 m 什么都没设置，这里将会删除表的所有记录
-	scope := r.DB.NewScope(m)
+	scope := db.NewScope(m)
 	if scope.PrimaryKeyZero() {
 		return errors.New(fmt.Sprintf("primary key(%s) must be set for update", scope.PrimaryKey()))
 	}
@@ -52,15 +75,25 @@ func (r *BaseRepository) Update(c context.Context, m model.Model, data interface
 	return db.Model(m).Update(data).Error
 }
 
-func (r *BaseRepository) FindOne(c context.Context, m model.Model) error {
-	db := opentracing.SetSpanToGorm(c, r.DB)
+func (r *BaseRepository) Get(c context.Context, m model.Model) error {
+	db, err := r.db(c)
+	if err != nil {
+		return err
+	}
+
+	db = opentracing.SetSpanToGorm(c, db)
 
 	return db.Where(m.Unique()).Take(m).Error
 }
 
 func (r *BaseRepository) Delete(c context.Context, m model.Model) error {
+	db, err := r.db(c)
+	if err != nil {
+		return err
+	}
+
 	// 主键保护，如果 m 什么都没设置，这里将会删除表的所有记录
-	ms := r.DB.NewScope(m).GetModelStruct()
+	ms := db.NewScope(m).GetModelStruct()
 	for _, pf := range ms.PrimaryFields {
 		value, err := breflect.GetStructField(m, pf.Name)
 		if err != nil {
@@ -72,14 +105,19 @@ func (r *BaseRepository) Delete(c context.Context, m model.Model) error {
 		}
 	}
 
-	return r.DB.Delete(m).Error
+	return db.Delete(m).Error
 }
 
 func (r *BaseRepository) Page(c context.Context, m model.Model, query *model.PageQuery, resultPtr interface{}) (total int, pageCount int, err error) {
-	// items := breflect.MakeSlicePtr(m, 0, 0)
-	ms := r.DB.NewScope(m).GetModelStruct()
+	db, err := r.db(c)
+	if err != nil {
+		return
+	}
 
-	dbHandler := r.DB.Model(m)
+	// items := breflect.MakeSlicePtr(m, 0, 0)
+	ms := db.NewScope(m).GetModelStruct()
+
+	dbHandler := db.Model(m)
 	dbHandler, err = buildQuery(dbHandler, ms, query.Filters)
 	if err != nil {
 		return
@@ -95,10 +133,15 @@ func (r *BaseRepository) Page(c context.Context, m model.Model, query *model.Pag
 	return
 }
 
-func (r *BaseRepository) Cursor(c context.Context, query *model.CursorQuery, m model.Model, resultPtr interface{}) (extra *model.CursorExtra, err error) {
-	ms := r.DB.NewScope(m).GetModelStruct()
+func (r *BaseRepository) List(c context.Context, query *model.CursorQuery, m model.Model, resultPtr interface{}) (extra *model.CursorExtra, err error) {
+	db, err := r.db(c)
+	if err != nil {
+		return
+	}
 
-	dbHandler := r.DB.Model(m)
+	ms := db.NewScope(m).GetModelStruct()
+
+	dbHandler := db.Model(m)
 	dbHandler, err = buildQuery(dbHandler, ms, query.Filters)
 	if err != nil {
 		return
@@ -111,6 +154,9 @@ func (r *BaseRepository) Cursor(c context.Context, query *model.CursorQuery, m m
 
 	// items := breflect.MakeSlicePtr(m, 0, 0)
 
+	var total int
+	dbHandler.Count(&total)
+
 	if err = dbHandler.Limit(query.Size).Find(resultPtr).Error; err != nil {
 		return
 	}
@@ -119,8 +165,8 @@ func (r *BaseRepository) Cursor(c context.Context, query *model.CursorQuery, m m
 		breflect.SlicePtrReverse(resultPtr)
 	}
 
-	var minCursor interface{} = nil
-	var maxCursor interface{} = nil
+	var startCursor interface{} = nil
+	var endCursor interface{} = nil
 
 	count := breflect.SlicePtrLen(resultPtr)
 	if count > 0 {
@@ -131,24 +177,33 @@ func (r *BaseRepository) Cursor(c context.Context, query *model.CursorQuery, m m
 			return
 		}
 
-		minCursor, err = breflect.GetStructField(minItem, field.Name)
+		startCursor, err = breflect.GetStructField(minItem, field.Name)
 		if err != nil {
 			return
 		}
 
 		maxItem := breflect.SlicePtrIndexOf(resultPtr, count-1)
-		maxCursor, err = breflect.GetStructField(maxItem, field.Name)
+		endCursor, err = breflect.GetStructField(maxItem, field.Name)
 		if err != nil {
 			return
 		}
 	}
 
+	var hasPrevious bool
+	var hasNext bool
+	if query.Direction == model.Direction_ASC {
+		hasNext = count == query.Size
+	} else if query.Direction == model.Direction_DSC {
+		hasPrevious = count == query.Size
+	}
+
 	extra = &model.CursorExtra{
-		Direction: query.Direction,
-		Size:      query.Size,
-		HasMore:   count == query.Size,
-		MinCursor: minCursor,
-		MaxCursor: maxCursor,
+		Direction:   query.Direction,
+		Total:       total,
+		HasPrevious: hasPrevious,
+		HasNext:     hasNext,
+		StartCursor: startCursor,
+		EndCursor:   endCursor,
 	}
 
 	return

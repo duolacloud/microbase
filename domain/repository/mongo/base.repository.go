@@ -76,7 +76,7 @@ func (r *baseRepository) Update(c context.Context, m model.Model, change interfa
 	})
 }
 
-func (r *baseRepository) FindOne(c context.Context, m model.Model) error {
+func (r *baseRepository) Get(c context.Context, m model.Model) error {
 	ms, err := reflect2.GetStructInfo(m, nil)
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func (r *baseRepository) Page(c context.Context, m model.Model, query *model.Pag
 	return
 }
 
-func (r *baseRepository) Cursor(c context.Context, query *model.CursorQuery, m model.Model, resultPtr interface{}) (extra *model.CursorExtra, err error) {
+func (r *baseRepository) List(c context.Context, query *model.CursorQuery, m model.Model, resultPtr interface{}) (extra *model.CursorExtra, err error) {
 	ms, err := reflect2.GetStructInfo(m, nil)
 	if err != nil {
 		return
@@ -186,7 +186,7 @@ func (r *baseRepository) Cursor(c context.Context, query *model.CursorQuery, m m
 		return
 	}
 
-	var minCursor interface{} = nil
+	var startCursor interface{} = nil
 	var maxCursor interface{} = nil
 
 	count := breflect.SlicePtrLen(resultPtr)
@@ -197,24 +197,33 @@ func (r *baseRepository) Cursor(c context.Context, query *model.CursorQuery, m m
 
 		minCursorModel := breflect.SlicePtrIndexOf(resultPtr, 0)
 
-		minCursor, err = breflect.GetStructField(minCursorModel, cursorProp.Name)
+		startCursor, err = breflect.GetStructField(minCursorModel, cursorProp.Name)
 		if err != nil {
 			return
 		}
 
 		maxCursorModel := breflect.SlicePtrIndexOf(resultPtr, count-1)
-		maxCursor, err = breflect.GetStructField(maxCursorModel, cursorProp.Name)
+		endCursor, err = breflect.GetStructField(maxCursorModel, cursorProp.Name)
 		if err != nil {
 			return
 		}
 	}
 
+	var hasPrevious bool
+	var hasNext bool
+	if query.Direction == model.Direction_ASC {
+		hasNext = count == query.Size
+	} else if query.Direction == model.Direction_DSC {
+		hasPrevious = count == query.Size
+	}
+
 	extra = &model.CursorExtra{
-		Direction: query.Direction,
-		Size:      size,
-		HasMore:   count == size,
-		MinCursor: minCursor,
-		MaxCursor: maxCursor,
+		Direction:   query.Direction,
+		Size:        size,
+		hasPrevious: hasPrevious,
+		hasNext:     hasNext,
+		StartCursor: startCursor,
+		EndCursor:   endCursor,
 	}
 
 	return

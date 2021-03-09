@@ -5,7 +5,8 @@ package tasks;
 
 import public "google/protobuf/timestamp.proto";
 import public "google/protobuf/duration.proto";
-import "github.com/duolacloud/microbase/proto/api/api.proto";
+// import "github.com/duolacloud/microbase/proto/api/api.proto";
+import "proto/api/api.proto";
 
 option go_package = "github.com/duolacloud/microbase/proto/tasks;tasks";
 
@@ -60,27 +61,62 @@ message Task {
     BASIC = 1;
     FULL = 2;
   }
-
   string name = 1;
-  PayloadType payloadType = 2;
-  google.protobuf.Timestamp ScheduleTime = 3;
-  google.protobuf.Timestamp CreateTime = 4;
-  google.protobuf.Duration DispatchDeadline = 5;
-  int32 DispatchCount = 6;
-  int32 ResponseCount = 7;
-  Attempt FirstAttempt = 8;
-  Attempt LastAttempt = 9;
-  View View1 = 10;
+
+  google.protobuf.Timestamp scheduleTime = 3;
+  google.protobuf.Timestamp createTime = 4;
+  google.protobuf.Duration dispatchDeadline = 5;
+  int32 dispatchCount = 6;
+  int32 responseCount = 7;
+  Attempt firstAttempt = 8;
+  Attempt lastAttempt = 9;
+  View view = 10;
+  oneof payloadType {
+    HttpRequest httpRequest = 11;
+    PullMessage pullMessage = 12; 
+  }
 }
 
-enum PayloadType {
-  HttpRequest = 0;
-  PullMessage = 1;
+enum HttpMethod {
+  HTTP_METHOD_UNSPECIFIED = 0;
+  POST = 1;
+  GET = 2;
+  HEAD = 3;
+  PUT = 4;
+  DELETE = 5;
+  PATCH = 6;
+  OPTIONS = 7;
+}
+
+message HttpRequest {
+  string url = 1;
+  HttpMethod httpMethod = 2;
+  map<string, string> headers = 3;
+  bytes body = 4;
+  oneof authorization_header {
+    OAuthToken oauthToken = 5;
+    OidcToken oidcToken = 6;
+  }
+}
+
+message OAuthToken {
+  string serviceAccount = 1;
+  string scope = 2;
+}
+
+message OidcToken {
+  string serviceAccount = 1;
+  string audience = 2;
+}
+
+message PullMessage {
+  bytes payload = 1;
+  string tag = 2; 
 }
 
 message Attempt {
-  google.protobuf.Timestamp ScheduleTime = 1;
-  google.protobuf.Timestamp DispatchTime = 2;
-  google.protobuf.Timestamp ResponseTime = 3;
-  // ResponseStatus status.Status = 4;
+  google.protobuf.Timestamp scheduleTime = 1;
+  google.protobuf.Timestamp dispatchTime = 2;
+  google.protobuf.Timestamp responseTime = 3;
+  api.Status responseStatus = 4;
 }

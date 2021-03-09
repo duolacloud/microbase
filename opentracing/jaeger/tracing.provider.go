@@ -3,7 +3,9 @@ package jaeger
 import (
 	"os"
 
-	"github.com/micro/cli/v2"
+	"github.com/urfave/cli/v2"
+
+	xxxmicro_opentracing "github.com/duolacloud/microbase/opentracing"
 	"github.com/micro/go-micro/v2/config"
 	"github.com/micro/go-micro/v2/logger"
 	"github.com/opentracing/opentracing-go"
@@ -11,7 +13,6 @@ import (
 	"github.com/uber/jaeger-client-go"
 	jconfig "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-lib/metrics/prometheus"
-	xxxmicro_opentracing "github.com/duolacloud/microbase/opentracing"
 )
 
 func NewTracerProvider(c *cli.Context, config config.Config) (tracer opentracing.Tracer, err error) {
@@ -20,7 +21,7 @@ func NewTracerProvider(c *cli.Context, config config.Config) (tracer opentracing
 		config.Get("service", "name").String("")
 	}
 	if len(serviceName) == 0 {
-		serviceName = c.String("server_name")
+		serviceName = c.String("service_name")
 	}
 
 	agentAddr := os.Getenv("JAEGER_ADDR")

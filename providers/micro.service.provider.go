@@ -3,40 +3,36 @@ package providers
 import (
 	"context"
 
-	"github.com/micro/cli/v2"
-	"github.com/micro/go-micro/v2"
-	"github.com/micro/go-micro/v2/logger"
+	"github.com/duolacloud/microbase/logger"
+	"github.com/urfave/cli/v2"
+
 	_ "github.com/micro/go-plugins/registry/consul/v2"
+
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
-	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/uber/v2"
 	xopentracing "github.com/micro/go-plugins/wrapper/trace/opentracing/v2"
+	xxxmicro_opentracing "github.com/xxxmicro/base/opentracing"
+
+	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/uber/v2"
 	"github.com/micro/go-plugins/wrapper/validator/v2"
 	"go.uber.org/fx"
 
-	// "github.com/micro/go-plugins/wrapper/validator/v2"
-	"net/http"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	xxxmicro_opentracing "github.com/duolacloud/microbase/opentracing"
+	"github.com/micro/go-micro/v2"
+	"github.com/micro/go-micro/v2/server"
+	"github.com/micro/go-micro/v2/server/grpc"
 )
 
-func NewMicroServiceFn(serviceName string, serviceVersion string) interface{} {
-	return func() (micro.Service, *cli.Context) {
-		return newMicroService(serviceName, serviceVersion)
-	}
-}
-
-func newMicroService(serviceName string, serviceVersion string) (micro.Service, *cli.Context) {
+func NewMicroService(c *cli.Context) micro.Service {
+	serviceName := c.String("server_name")
+	serviceVersion := c.String("service_version")
 
 	// use grpc server
-	// server := grpc.NewServer(server.WrapHandler(validator.NewHandlerWrapper()))
+	server := grpc.NewServer(server.WrapHandler(validator.NewHandlerWrapper()))
 	QPS := 5000
 
-	service := micro.NewService(
+	srv := micro.NewService(
 		micro.Name(serviceName),
-		micro.Version(serviceVersion),
 		micro.RegisterTTL(time.Minute),
 		micro.RegisterInterval(time.Second*30),
 		micro.WrapHandler(validator.NewHandlerWrapper()),
@@ -44,75 +40,29 @@ func newMicroService(serviceName string, serviceVersion string) (micro.Service, 
 		micro.WrapHandler(prometheus.NewHandlerWrapper(prometheus.ServiceName(serviceName), prometheus.ServiceVersion(serviceVersion))),
 		micro.WrapHandler(ratelimit.NewHandlerWrapper(QPS)),
 		micro.WrapSubscriber(xopentracing.NewSubscriberWrapper(xxxmicro_opentracing.GlobalTracerWrapper())),
-		// micro.Server(server),
-		micro.Flags(
-			&cli.StringFlag{
-				Name:  "apollo_namespace",
-				Usage: "apollo_namespace",
-			},
-			&cli.StringFlag{
-				Name:  "apollo_address",
-				Usage: "apollo_address",
-			},
-			&cli.StringFlag{
-				Name:  "apollo_app_id",
-				Usage: "apollo_app_id",
-			},
-			&cli.StringFlag{
-				Name:  "apollo_cluster",
-				Usage: "apollo_cluster",
-			},
-			&cli.StringFlag{
-				Name:    "prometheus_addr",
-				Usage:   "prometheus_addr",
-				EnvVars: []string{"PROMETHEUS_ADDR"},
-				Value:   ":16627",
-			},
-		),
+		micro.Server(server),
 	)
 
-	var cc *cli.Context
-	service.Init(
-		micro.Action(func(c *cli.Context) error {
-			logger.Log(logger.DebugLevel, "service.Init")
-			cc = c
-
-			if len(c.String("prometheus_addr")) > 0 {
-				prometheusBoot(c.String("prometheus_addr"))
-			}
-
-			return nil
-		}),
-	)
-
-	return service, cc
+	return srv
 }
 
-func StartMicroService(lifecycle fx.Lifecycle, service micro.Service /* broker broker.Broker,*/, tracer opentracing.Tracer) {
+func StartMicroService(lifecycle fx.Lifecycle, srv micro.Service) {
 	// TODO o := service.Options()
 	// TODO micro.Broker(broker)(&o)
 
 	lifecycle.Append(fx.Hook{
 		OnStart: func(context.Context) error {
-			logger.Log(logger.DebugLevel, "lifecycle.OnStart")
-			return service.Run()
+			logger.Infof("service run")
+			return srv.Run()
 		},
 	})
 }
 
-func prometheusBoot(addr string) {
-	http.Handle("/metrics", promhttp.Handler())
-	go func() {
-		err := http.ListenAndServe(addr, nil)
-		if err != nil {
-			logger.Fatal("ListenAndServe: ", err)
-		}
-	}()
-}
-
-func MakeMicroServiceOpts(serviceName string, serviceVersion string) fx.Option {
+func MakeMicroServiceOpts(c *cli.Context) fx.Option {
 	return fx.Options(
-		fx.Provide(NewMicroServiceFn(serviceName, serviceVersion)),
+		fx.Provide(func() micro.Service {
+			return NewMicroService(c)
+		}),
 		fx.Invoke(StartMicroService),
 	)
 }

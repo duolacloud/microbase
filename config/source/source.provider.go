@@ -2,10 +2,10 @@ package source
 
 import (
 	"github.com/duolacloud/microbase/config"
-	"github.com/micro/cli/v2"
+	"github.com/duolacloud/microbase/logger"
 	"github.com/micro/go-micro/v2/config/encoder/yaml"
 	"github.com/micro/go-micro/v2/config/source"
-	"github.com/micro/go-micro/v2/logger"
+	"github.com/urfave/cli/v2"
 	apollo "github.com/xxxmicro/go-micro-apollo-plugin"
 )
 
@@ -27,7 +27,7 @@ func NewSourceProvider(c *cli.Context) source.Source {
 
 	appId := c.String("apollo_app_id")
 	if len(appId) == 0 {
-		appId = config.Env("APOLLO_APPID", "xpay-api")
+		appId = config.Env("APOLLO_APP_ID", "")
 	}
 
 	cluster := c.String("apollo_cluster")

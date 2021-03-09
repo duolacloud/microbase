@@ -18,4 +18,5 @@ var Framework = fx.Provide(
 var FrameworkOpts = fx.Options(
 	Framework,
 	fx.Invoke(InitLogger),
+	fx.Invoke(StartPrometheus),
 )

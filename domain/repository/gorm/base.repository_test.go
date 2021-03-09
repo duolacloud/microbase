@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/duolacloud/microbase/database/gorm"
+	"github.com/duolacloud/microbase/domain/model"
 	_gorm "github.com/jinzhu/gorm"
 	"github.com/micro/go-micro/v2/config"
 	"github.com/micro/go-micro/v2/config/source/memory"
 	"github.com/micro/go-micro/v2/logger"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/duolacloud/microbase/database/gorm"
-	"github.com/duolacloud/microbase/domain/model"
 )
 
 type User struct {
@@ -150,7 +150,7 @@ func TestCrud(t *testing.T) {
 
 	{
 		findUser := &User{ID: user1.ID}
-		err := userRepo.FindOne(context.Background(), findUser)
+		err := userRepo.Get(context.Background(), findUser)
 		if assert.Error(err) {
 			t.Fatal(err)
 		}
