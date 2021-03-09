@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/duolacloud/microbase/database/mongo"
+	"github.com/duolacloud/microbase/domain/model"
 	"github.com/micro/go-micro/v2/config"
 	"github.com/micro/go-micro/v2/config/source/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/transaction-wg/seata-golang/pkg/util/log"
-	"github.com/duolacloud/microbase/database/mongo"
-	"github.com/duolacloud/microbase/domain/model"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -152,7 +152,7 @@ func TestCrud(t *testing.T) {
 
 	{
 		findUser := &User{ID: user2.ID}
-		err := userRepo.FindOne(context.Background(), findUser)
+		err := userRepo.Get(context.Background(), findUser)
 		assert.NoError(err)
 		if err != nil {
 			log.Info("查找记录失败")
@@ -213,7 +213,7 @@ func TestCrud(t *testing.T) {
 		}
 
 		items := make([]*User, 0)
-		extra, err := userRepo.Cursor(context.Background(), cursorQuery, &User{}, &items)
+		extra, err := userRepo.List(context.Background(), cursorQuery, &User{}, &items)
 		if assert.Error(err) {
 			t.Fatal(err)
 		}

@@ -20,7 +20,7 @@ func NewBaseRepository(provider repository.DBProvider) repository.BaseRepository
 	return &BaseRepository{provider}
 }
 
-func (r *BaseRepository) db(c context.Context) (*_gorm.DB, error) {
+func (r *BaseRepository) DB(c context.Context) (*_gorm.DB, error) {
 	db, err := r.DBProvider.Provide(c)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func (r *BaseRepository) db(c context.Context) (*_gorm.DB, error) {
 }
 
 func (r *BaseRepository) Create(c context.Context, m model.Model) error {
-	db, err := r.db(c)
+	db, err := r.DB(c)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (r *BaseRepository) Create(c context.Context, m model.Model) error {
 }
 
 func (r *BaseRepository) Upsert(c context.Context, m model.Model) (*repository.ChangeInfo, error) {
-	db, err := r.db(c)
+	db, err := r.DB(c)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (r *BaseRepository) Upsert(c context.Context, m model.Model) (*repository.C
 }
 
 func (r *BaseRepository) Update(c context.Context, m model.Model, data interface{}) error {
-	db, err := r.db(c)
+	db, err := r.DB(c)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (r *BaseRepository) Update(c context.Context, m model.Model, data interface
 }
 
 func (r *BaseRepository) Get(c context.Context, m model.Model) error {
-	db, err := r.db(c)
+	db, err := r.DB(c)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (r *BaseRepository) Get(c context.Context, m model.Model) error {
 }
 
 func (r *BaseRepository) Delete(c context.Context, m model.Model) error {
-	db, err := r.db(c)
+	db, err := r.DB(c)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (r *BaseRepository) Delete(c context.Context, m model.Model) error {
 }
 
 func (r *BaseRepository) Page(c context.Context, m model.Model, query *model.PageQuery, resultPtr interface{}) (total int, pageCount int, err error) {
-	db, err := r.db(c)
+	db, err := r.DB(c)
 	if err != nil {
 		return
 	}
@@ -134,7 +134,7 @@ func (r *BaseRepository) Page(c context.Context, m model.Model, query *model.Pag
 }
 
 func (r *BaseRepository) List(c context.Context, query *model.CursorQuery, m model.Model, resultPtr interface{}) (extra *model.CursorExtra, err error) {
-	db, err := r.db(c)
+	db, err := r.DB(c)
 	if err != nil {
 		return
 	}
@@ -142,7 +142,7 @@ func (r *BaseRepository) List(c context.Context, query *model.CursorQuery, m mod
 	ms := db.NewScope(m).GetModelStruct()
 
 	dbHandler := db.Model(m)
-	dbHandler, err = buildQuery(dbHandler, ms, query.Filters)
+	dbHandler, err = buildQuery(dbHandler, ms, query.Filter)
 	if err != nil {
 		return
 	}
@@ -171,7 +171,7 @@ func (r *BaseRepository) List(c context.Context, query *model.CursorQuery, m mod
 	count := breflect.SlicePtrLen(resultPtr)
 	if count > 0 {
 		minItem := breflect.SlicePtrIndexOf(resultPtr, 0)
-		field, ok := FindField(query.CursorSort.Property, ms, dbHandler)
+		field, ok := FindField(query.CursorSort.Field, ms, dbHandler)
 		if !ok {
 			err = errors.New("field not found")
 			return

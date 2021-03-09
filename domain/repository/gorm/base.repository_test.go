@@ -207,7 +207,7 @@ func TestCrud(t *testing.T) {
 		}
 
 		items := make([]*User, 0)
-		extra, err := userRepo.Cursor(context.Background(), cursorQuery, &User{}, &items)
+		extra, err := userRepo.List(context.Background(), cursorQuery, &User{}, &items)
 		if assert.Error(err) {
 			t.Fatal(err)
 		}

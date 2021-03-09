@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	_gorm "github.com/jinzhu/gorm"
 	"github.com/duolacloud/microbase/domain/model"
 	"github.com/duolacloud/microbase/types/smarttime"
+	_gorm "github.com/jinzhu/gorm"
 )
 
 func gormCursorFilter(queryHandler *_gorm.DB, ms *_gorm.ModelStruct, query *model.CursorQuery) (*_gorm.DB, bool, error) {
 	var orderBy string
 	var reverse bool
 
-	sortKey := query.CursorSort.Property
+	sortKey := query.CursorSort.Field
 
 	field, ok := FindField(sortKey, ms, queryHandler)
 	if !ok {
@@ -32,8 +32,8 @@ func gormCursorFilter(queryHandler *_gorm.DB, ms *_gorm.ModelStruct, query *mode
 		}
 	}
 
-	switch query.CursorSort.Type {
-	case model.SortType_DSC:
+	switch query.CursorSort.Direction {
+	case model.SortDirection_DSC:
 		{
 			if query.Direction == 0 {
 				// 游标前
@@ -51,7 +51,7 @@ func gormCursorFilter(queryHandler *_gorm.DB, ms *_gorm.ModelStruct, query *mode
 				}
 			}
 		}
-	default: // SortType_ASC
+	default: // SortDirection_ASC
 		{
 			if query.Direction == 0 {
 				// 游标前

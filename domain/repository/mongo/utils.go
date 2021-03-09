@@ -164,11 +164,11 @@ func buildSort(ms *reflect.StructInfo, sorts []*model.SortSpec) ([]string, error
 			}
 			var s1 string
 			switch s.Type {
-			case model.SortType_DSC:
+			case model.SortDirection_DSC:
 				{
 					s1 = fmt.Sprintf("-%s", s.Property)
 				}
-			default: // SortType_ASC
+			default: // SortDirection_ASC
 				{
 					s1 = s.Property
 				}

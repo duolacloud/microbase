@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	_gorm "github.com/jinzhu/gorm"
 	"github.com/duolacloud/microbase/domain/model"
 	"github.com/duolacloud/microbase/types/smarttime"
+	_gorm "github.com/jinzhu/gorm"
 )
 
 var (
@@ -183,14 +183,14 @@ func buildSort(dbHandler *_gorm.DB, ms *_gorm.ModelStruct, sorts []*model.SortSp
 	}
 
 	for _, sort := range sorts {
-		sortKey := sort.Property
+		sortKey := sort.Field
 		field, ok := FindField(sortKey, ms, dbHandler)
 		if !ok {
 			err = errors.New(fmt.Sprintf("unknown field: %s", sortKey))
 			return
 		}
 
-		sortDir := string(sort.Type)
+		sortDir := string(sort.Direction)
 		if sortDir == "DSC" {
 			sortDir = "desc"
 		} else {

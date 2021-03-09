@@ -6,7 +6,7 @@ import (
 	"github.com/duolacloud/microbase/logger"
 	"github.com/urfave/cli/v2"
 
-	_ "github.com/micro/go-plugins/registry/consul/v2"
+	"github.com/micro/go-plugins/registry/consul/v2"
 
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	xopentracing "github.com/micro/go-plugins/wrapper/trace/opentracing/v2"
@@ -19,20 +19,25 @@ import (
 	"time"
 
 	"github.com/micro/go-micro/v2"
-	"github.com/micro/go-micro/v2/server"
-	"github.com/micro/go-micro/v2/server/grpc"
+	"github.com/micro/go-micro/v2/registry"
 )
 
 func NewMicroService(c *cli.Context) micro.Service {
-	serviceName := c.String("server_name")
+	serviceName := c.String("service_name")
 	serviceVersion := c.String("service_version")
-
+	registryAddress := c.StringSlice("registry_address")
+	logger.Infof("registryAddress: %s", registryAddress)
 	// use grpc server
-	server := grpc.NewServer(server.WrapHandler(validator.NewHandlerWrapper()))
+	// server := grpc.NewServer(server.WrapHandler(validator.NewHandlerWrapper()))
 	QPS := 5000
+
+	reg := consul.NewRegistry(func(op *registry.Options) {
+		op.Addrs = registryAddress
+	})
 
 	srv := micro.NewService(
 		micro.Name(serviceName),
+		micro.Registry(reg),
 		micro.RegisterTTL(time.Minute),
 		micro.RegisterInterval(time.Second*30),
 		micro.WrapHandler(validator.NewHandlerWrapper()),
@@ -40,7 +45,7 @@ func NewMicroService(c *cli.Context) micro.Service {
 		micro.WrapHandler(prometheus.NewHandlerWrapper(prometheus.ServiceName(serviceName), prometheus.ServiceVersion(serviceVersion))),
 		micro.WrapHandler(ratelimit.NewHandlerWrapper(QPS)),
 		micro.WrapSubscriber(xopentracing.NewSubscriberWrapper(xxxmicro_opentracing.GlobalTracerWrapper())),
-		micro.Server(server),
+		// micro.Server(server),
 	)
 
 	return srv

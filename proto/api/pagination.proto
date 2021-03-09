@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api;
 
-option go_package = "github.com/duolacloud/proto/api;api";
+option go_package = "github.com/duolacloud/microbase/proto/api;api";
 
 enum SortDirection {
   ASC = 0;

@@ -15,11 +15,6 @@ type CursorQuery struct {
 	Direction  Direction              `json:"direction"`  // 查询方向 0：游标前；1：游标后
 }
 
-type CursorList struct {
-	Extra CursorExtra `json:"extra"`
-	Items interface{} `json:"items"` // 数据列表指针
-}
-
 type CursorExtra struct {
 	Direction   Direction   `json:"direction"`   // 查询方向 0：游标前；1：游标后
 	Total       int         `json:"total"`       // 数据量

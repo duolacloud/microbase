@@ -39,7 +39,7 @@ func NewGormTenancy(config config.Config) (multitenancy.Tenancy, error) {
 	var clientCreateFn = func(ctx context.Context, tenantName string) (multitenancy.Resource, error) {
 		dsn := strings.Replace(connectionString, dbName, DBName(dbName, tenantName), 1)
 
-		db, err := gorm.Open(driver, connectionString)
+		db, err := gorm.Open(driver, dsn)
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +53,7 @@ func NewGormTenancy(config config.Config) (multitenancy.Tenancy, error) {
 		addAutoCallbacks(db)
 
 		opentracing.AddGormCallbacks(db)
-		return db
+		return db, nil
 	}
 
 	tenancy := multitenancy.NewCachedTenancy(clientCreateFn, clientCloseFunc)

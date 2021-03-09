@@ -11,6 +11,11 @@ var defaultFlags []cli.Flag
 
 func init() {
 	defaultFlags = []cli.Flag{
+		&cli.StringSliceFlag{
+			Name:    "registry_address",
+			Usage:   "registry_address",
+			EnvVars: []string{"MICRO_REGISTRY_ADDRESS"},
+		},
 		&cli.StringFlag{
 			Name:    "service_name",
 			Usage:   "service_name",

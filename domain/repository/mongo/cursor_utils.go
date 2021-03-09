@@ -29,7 +29,7 @@ func mongoCursorFilter(ms *reflect.StructInfo, cursorQuery *model.CursorQuery) (
 	}
 
 	switch cursorQuery.CursorSort.Type {
-	case model.SortType_DSC:
+	case model.SortDirection_DSC:
 		{
 			if cursorQuery.Direction == 0 {
 				// 游标前
@@ -47,7 +47,7 @@ func mongoCursorFilter(ms *reflect.StructInfo, cursorQuery *model.CursorQuery) (
 				}
 			}
 		}
-	default: // SortType_ASC
+	default: // SortDirection_ASC
 		{
 			if cursorQuery.Direction == 0 {
 				// 游标前
