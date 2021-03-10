@@ -34,7 +34,7 @@ func FindField(name string, ms *_gorm.ModelStruct, dbHandler *_gorm.DB) (*_gorm.
 	return field, ok
 }
 
-func buildQuery(db *_gorm.DB, ms *_gorm.ModelStruct, filters map[string]interface{}) (*_gorm.DB, error) {
+func applyFilter(db *_gorm.DB, ms *_gorm.ModelStruct, filters map[string]interface{}) (*_gorm.DB, error) {
 	if filters == nil || len(filters) == 0 {
 		return db, nil
 	}
@@ -178,29 +178,19 @@ func gormFilterBetween(db *_gorm.DB, key string, value interface{}) (*_gorm.DB, 
 	}
 }
 
-func buildSort(dbHandler *_gorm.DB, ms *_gorm.ModelStruct, sorts []*model.SortSpec) (db *_gorm.DB, err error) {
-	if sorts == nil || len(sorts) == 0 {
-		db = dbHandler
-		return
+func applyOrders(dbHandler *_gorm.DB, ms *_gorm.ModelStruct, orders []*model.Order) (*_gorm.DB, error) {
+	if orders == nil || len(orders) == 0 {
+		return dbHandler, nil
 	}
 
-	for _, sort := range sorts {
-		sortKey := sort.Field
-		field, ok := FindField(sortKey, ms, dbHandler)
+	for _, order := range orders {
+		field, ok := FindField(order.Field, ms, dbHandler)
 		if !ok {
-			err = errors.New(fmt.Sprintf("unknown field: %s", sortKey))
-			return
+			return nil, errors.New(fmt.Sprintf("unknown field: %s", order.Field))
 		}
 
-		sortDir := string(sort.Direction)
-		if sortDir == "DSC" {
-			sortDir = "desc"
-		} else {
-			sortDir = "asc"
-		}
-
-		db = dbHandler.Order(fmt.Sprintf("%s %s", field.DBName, sortDir))
+		dbHandler = dbHandler.Order(fmt.Sprintf("%s %s", field.DBName, order.Direction.String()))
 	}
 
-	return
+	return dbHandler, nil
 }

@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"testing"
 	"time"
 
 	"github.com/duolacloud/microbase/database/gorm"
 	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/domain/repository"
+	"github.com/duolacloud/microbase/multitenancy"
 	_gorm "github.com/jinzhu/gorm"
 	"github.com/micro/go-micro/v2/config"
 	"github.com/micro/go-micro/v2/config/source/memory"
@@ -46,7 +49,7 @@ func getConfig() (config.Config, error) {
 	data := []byte(`{
 		"db": {
 			"driver": "mysql",
-			"connection_string": "root:root@tcp(localhost:3306)/uim?charset=utf8mb4&parseTime=True&loc=Local"
+			"connection_string": "root:debezium@tcp(localhost:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
 		}
 	}`)
 	source := memory.NewSource(memory.WithJSON(data))
@@ -59,14 +62,24 @@ func getConfig() (config.Config, error) {
 	return config, nil
 }
 
-func getDB(config config.Config) (*_gorm.DB, error) {
-	db, err := gorm.NewDbProvider(config)
+type EntityMap struct {
+}
+
+func (EntityMap) GetEntities() []interface{} {
+	return []interface{}{
+		User{},
+	}
+}
+
+func getTenancy(config config.Config) (multitenancy.Tenancy, error) {
+	entityMap := &EntityMap{}
+	tenancy, err := gorm.NewGormTenancy(config, entityMap)
 	if err != nil {
-		logger.Fatal("数据库连接失败")
+		logger.Fatal("数据库连接失败", err)
 		return nil, err
 	}
 
-	return db, nil
+	return tenancy, nil
 }
 
 func TestCrud(t *testing.T) {
@@ -77,15 +90,12 @@ func TestCrud(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	db, err := getDB(config)
+	tenancy, err := getTenancy(config)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	db.AutoMigrate(&User{})
-	logger.Info("创建数据表完毕")
-
-	userRepo := NewBaseRepository(db)
+	userRepo := NewBaseRepository(repository.NewMultitenancyProvider(tenancy))
 
 	user1 := &User{
 		Name: "吕布",
@@ -159,7 +169,7 @@ func TestCrud(t *testing.T) {
 
 	{
 		pageQuery := &model.PageQuery{
-			Filters: map[string]interface{}{
+			Filter: map[string]interface{}{
 				"name": "赵云",
 				"age": map[string]interface{}{
 					"GT": 22,
@@ -192,38 +202,7 @@ func TestCrud(t *testing.T) {
 		t.Log(s)
 	}
 
-	{
-		h, _ := time.ParseDuration("1s")
-		t1 := user1.Ctime.Add(h)
-		cursor := t1.UnixNano() / 1e6
-
-		cursorQuery := &model.CursorQuery{
-			Filters: map[string]interface{}{},
-			CursorSort: &model.SortSpec{
-				Property: "ctime",
-			},
-			Cursor: cursor,
-			Size:   10,
-		}
-
-		items := make([]*User, 0)
-		extra, err := userRepo.List(context.Background(), cursorQuery, &User{}, &items)
-		if assert.Error(err) {
-			t.Fatal(err)
-		}
-
-		if assert.Equal(2, len(items)) {
-			logger.Info("游标查询正确")
-		} else {
-			logger.Info(fmt.Sprintf("游标查询错误 期望1条, 实际返回%d条", len(items)))
-		}
-
-		b, _ := json.Marshal(items)
-		s := string(b)
-		t.Log(s)
-		t.Log(extra)
-		logger.Info("游标查询成功")
-	}
+	testCursorList(t, userRepo)
 
 	{
 		err := userRepo.Delete(context.Background(), &User{ID: user1.ID})
@@ -232,7 +211,7 @@ func TestCrud(t *testing.T) {
 
 		items := make([]*User, 0)
 		total, pageCount, err := userRepo.Page(context.Background(), &User{}, &model.PageQuery{
-			Filters:  map[string]interface{}{},
+			Filter:   map[string]interface{}{},
 			PageSize: 10,
 			PageNo:   1,
 		}, &items)
@@ -249,7 +228,7 @@ func TestCrud(t *testing.T) {
 
 		items = make([]*User, 0)
 		total, pageCount, err = userRepo.Page(context.Background(), &User{}, &model.PageQuery{
-			Filters:  map[string]interface{}{},
+			Filter:   map[string]interface{}{},
 			PageSize: 10,
 			PageNo:   1,
 		}, &items)
@@ -259,4 +238,77 @@ func TestCrud(t *testing.T) {
 
 		logger.Info("翻页核对成功")
 	}
+}
+
+func TestCursorList(t *testing.T) {
+	config, err := getConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tenancy, err := getTenancy(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userRepo := NewBaseRepository(repository.NewMultitenancyProvider(tenancy))
+
+	testCursorList(t, userRepo)
+}
+
+func testCursorList(t *testing.T, repo repository.BaseRepository) {
+	/*for i := 0; i < 100; i++ {
+		user := &User{
+			Name: "关羽",
+			Age:  38,
+		}
+
+		change, _ := repo.Upsert(context.Background(), user)
+		t.Logf("change: %v", change)
+		time.Sleep(time.Second * 2)
+	}*/
+	// h, _ := time.ParseDuration("1s")
+	// t1 := user1.Ctime.Add(h)
+
+	var cursor string
+	for {
+		cursorQuery := &model.CursorQuery{
+			NeedTotal: true,
+			Cursor:    cursor,
+			Filter:    map[string]interface{}{},
+			Orders: []*model.Order{
+				{
+					Field: "name",
+				},
+				{
+					Field: "ctime",
+				},
+			},
+			Size: 10,
+		}
+
+		items := make([]*User, 0)
+		extra, err := repo.List(context.Background(), cursorQuery, &User{}, &items)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		b, _ := json.Marshal(items)
+		s := string(b)
+		log.Printf("=== items: %s", s)
+		log.Printf("=== extra: %v", extra)
+		log.Printf("=== total: %d", extra.Total)
+		log.Printf("=== startCursor: %s", extra.StartCursor)
+		log.Printf("=== endCursor: %s", extra.EndCursor)
+		log.Printf("=== hasPrevious: %v", extra.HasPrevious)
+		log.Printf("=== hasNext: %v", extra.HasNext)
+
+		cursor = extra.EndCursor
+
+		if !extra.HasPrevious || !extra.HasNext {
+			break
+		}
+	}
+
+	logger.Info("游标查询成功")
 }

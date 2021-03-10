@@ -37,10 +37,14 @@ require (
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/urfave/cli/v2 v2.2.0
+	github.com/vmihailenco/msgpack v4.0.4+incompatible
+	github.com/vmihailenco/msgpack/v5 v5.2.0
 	github.com/xxxmicro/base v0.1.35
 	github.com/xxxmicro/go-micro-apollo-plugin v1.1.4
 	go.uber.org/fx v1.13.1
 	go.uber.org/zap v1.15.0 // indirect
+	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
+	google.golang.org/appengine v1.6.1
 	google.golang.org/grpc v1.33.2
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22

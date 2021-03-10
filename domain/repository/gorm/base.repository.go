@@ -118,12 +118,12 @@ func (r *BaseRepository) Page(c context.Context, m model.Model, query *model.Pag
 	ms := db.NewScope(m).GetModelStruct()
 
 	dbHandler := db.Model(m)
-	dbHandler, err = buildQuery(dbHandler, ms, query.Filters)
+	dbHandler, err = applyFilter(dbHandler, ms, query.Filter)
 	if err != nil {
 		return
 	}
 
-	dbHandler, err = buildSort(dbHandler, ms, query.Sort)
+	dbHandler, err = applyOrders(dbHandler, ms, query.Orders)
 	if err != nil {
 		return
 	}
@@ -139,72 +139,9 @@ func (r *BaseRepository) List(c context.Context, query *model.CursorQuery, m mod
 		return
 	}
 
-	ms := db.NewScope(m).GetModelStruct()
+	paginator := NewCursorPaginator(db, m)
 
-	dbHandler := db.Model(m)
-	dbHandler, err = buildQuery(dbHandler, ms, query.Filter)
-	if err != nil {
-		return
-	}
-
-	dbHandler, reverse, err := gormCursorFilter(dbHandler, ms, query)
-	if err != nil {
-		return
-	}
-
-	// items := breflect.MakeSlicePtr(m, 0, 0)
-
-	var total int
-	dbHandler.Count(&total)
-
-	if err = dbHandler.Limit(query.Size).Find(resultPtr).Error; err != nil {
-		return
-	}
-
-	if reverse {
-		breflect.SlicePtrReverse(resultPtr)
-	}
-
-	var startCursor interface{} = nil
-	var endCursor interface{} = nil
-
-	count := breflect.SlicePtrLen(resultPtr)
-	if count > 0 {
-		minItem := breflect.SlicePtrIndexOf(resultPtr, 0)
-		field, ok := FindField(query.CursorSort.Field, ms, dbHandler)
-		if !ok {
-			err = errors.New("field not found")
-			return
-		}
-
-		startCursor, err = breflect.GetStructField(minItem, field.Name)
-		if err != nil {
-			return
-		}
-
-		maxItem := breflect.SlicePtrIndexOf(resultPtr, count-1)
-		endCursor, err = breflect.GetStructField(maxItem, field.Name)
-		if err != nil {
-			return
-		}
-	}
-
-	var hasPrevious bool
-	var hasNext bool
-	if query.Direction == 1 {
-		hasNext = count == query.Size
-	} else if query.Direction == 0 {
-		hasPrevious = count == query.Size
-	}
-
-	extra = &model.CursorExtra{
-		Direction:   query.Direction,
-		Total:       total,
-		HasPrevious: hasPrevious,
-		HasNext:     hasNext,
-		StartCursor: startCursor,
-		EndCursor:   endCursor,
-	}
+	extra, err = paginator.Paginate(c, query, resultPtr)
 
 	return
 }

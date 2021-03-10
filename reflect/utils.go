@@ -1,11 +1,11 @@
 package reflect
 
 import (
-	"fmt"
 	"bytes"
 	"encoding/json"
-	"reflect"
 	"errors"
+	"fmt"
+	"reflect"
 )
 
 // 将string转化为结构
@@ -106,7 +106,7 @@ func DereferencePtrToSlice(ptr interface{}) []interface{} {
 	return ToSlice(reflect.Indirect(reflect.ValueOf(ptr)).Interface())
 }
 
-func indirectValue(reflectValue reflect.Value) reflect.Value {
+func IndirectValue(reflectValue reflect.Value) reflect.Value {
 	for reflectValue.Kind() == reflect.Ptr {
 		reflectValue = reflectValue.Elem()
 	}
@@ -114,9 +114,9 @@ func indirectValue(reflectValue reflect.Value) reflect.Value {
 }
 
 func GetStructField(v interface{}, fieldName string) (reflect.Value, error) {
-	field := indirectValue(reflect.ValueOf(v)).FieldByName(fieldName)
+	field := IndirectValue(reflect.ValueOf(v)).FieldByName(fieldName)
 
-	fmt.Printf("field: %v, valid: %v, canset: %v\n", field, field.IsValid(), field.CanSet())
+	// fmt.Printf("field: %v, valid: %v, canset: %v\n", fieldName, field.IsValid(), field.CanSet())
 	if !field.IsValid() /*|| !field.CanSet()*/ {
 		return reflect.Value{}, errors.New(fmt.Sprintf("ErrInvalid %s", v))
 	}
@@ -125,19 +125,19 @@ func GetStructField(v interface{}, fieldName string) (reflect.Value, error) {
 }
 
 func IsBlank(value reflect.Value) bool {
-    switch value.Kind() {
-    case reflect.String:
-        return value.Len() == 0
-    case reflect.Bool:
-        return !value.Bool()
-    case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-        return value.Int() == 0
-    case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-        return value.Uint() == 0
-    case reflect.Float32, reflect.Float64:
-        return value.Float() == 0
-    case reflect.Interface, reflect.Ptr:
-        return value.IsNil()
-    }
-    return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
+	switch value.Kind() {
+	case reflect.String:
+		return value.Len() == 0
+	case reflect.Bool:
+		return !value.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return value.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return value.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return value.Float() == 0
+	case reflect.Interface, reflect.Ptr:
+		return value.IsNil()
+	}
+	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
 }

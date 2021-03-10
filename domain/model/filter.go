@@ -44,15 +44,25 @@ const (
 	TIMESTAMP TimeType = "timestamp" // 时间戳 int64
 )
 
-type SortDirection string
+type OrderDirection string
 
 const (
-	SortDirection_DEFAULT SortDirection = "DEFAULT"
-	SortDirection_ASC     SortDirection = "ASC" // 升序
-	SortDirection_DSC     SortDirection = "DSC" // 降序
+	OrderDirectionAsc  OrderDirection = "ASC"  // 升序
+	OrderDirectionDesc OrderDirection = "DESC" // 降序
 )
 
-type SortSpec struct {
-	Field     string        `json:"field"`     // 属性名
-	Direction SortDirection `json:"direction"` // 排序类型
+func (o OrderDirection) Reverse() OrderDirection {
+	if o == OrderDirectionDesc {
+		return OrderDirectionAsc
+	}
+	return OrderDirectionDesc
+}
+
+func (o OrderDirection) String() string {
+	return string(o)
+}
+
+type Order struct {
+	Field     string         `json:"field"`     // 属性名
+	Direction OrderDirection `json:"direction"` // 排序类型
 }

@@ -1,16 +1,16 @@
 package model
 
 type PageQuery struct {
-	Filters map[string]interface{}		`json:"filters"`
-	PageNo int											`json:"pageNo"`
-	PageSize int										`json:"pageSize"`
-	Sort 		[]*SortSpec								`json:"sort"`
+	Filter   map[string]interface{} `json:"filter"`
+	PageNo   int                    `json:"pageNo"`
+	PageSize int                    `json:"pageSize"`
+	Orders   []*Order               `json:"order"`
 }
 
 type Page struct {
-	Content interface{}	`json:"content"`
-	Total int `json:"total"`
-	PageNo int	`json:"pageNo"`
-	PageSize int	`json:"pageSize"`
-	PageCount int `json:"pageCount"`
+	Content   interface{} `json:"content"`
+	Total     int         `json:"total"`
+	PageNo    int         `json:"pageNo"`
+	PageSize  int         `json:"pageSize"`
+	PageCount int         `json:"pageCount"`
 }
