@@ -66,9 +66,7 @@ func StartMicroService(lifecycle fx.Lifecycle, srv micro.Service) {
 
 func MakeMicroServiceOpts(c *cli.Context) fx.Option {
 	return fx.Options(
-		fx.Provide(func() micro.Service {
-			return NewMicroService(c)
-		}),
+		fx.Provide(NewMicroService),
 		fx.Invoke(StartMicroService),
 	)
 }
