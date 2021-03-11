@@ -353,6 +353,7 @@ func testConnectionPaginate(t *testing.T, repo repository.BaseRepository) {
 		connQuery := &model.ConnectionQuery{
 			NeedTotal: true,
 			After:     &after,
+			Fields:    []string{"name", "ctime"},
 			Filter:    map[string]interface{}{},
 			Orders: []*model.Order{
 				{
@@ -370,9 +371,9 @@ func testConnectionPaginate(t *testing.T, repo repository.BaseRepository) {
 			t.Fatal(err)
 		}
 
-		// b, _ := json.Marshal(items)
-		// s := string(b)
-		// log.Printf("=== items: %s", s)
+		b, _ := json.Marshal(conn.Edges)
+		s := string(b)
+		log.Printf("=== edges: %s", s)
 		//log.Printf("=== extra: %v", extra)
 		log.Printf("=== after: %v", after)
 		log.Printf("=== edges count: %d", len(conn.Edges))
