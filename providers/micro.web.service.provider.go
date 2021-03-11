@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -35,6 +36,7 @@ func StartMicroWebService(lifecycle fx.Lifecycle, service web.Service, gin *gin.
 
 	lifecycle.Append(fx.Hook{
 		OnStart: func(context.Context) error {
+			log.Printf("web service run")
 			return service.Run()
 		},
 	})

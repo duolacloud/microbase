@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"log"
 
 	"github.com/duolacloud/microbase/logger"
 	"github.com/urfave/cli/v2"
@@ -57,7 +58,7 @@ func StartMicroService(lifecycle fx.Lifecycle, srv micro.Service) {
 
 	lifecycle.Append(fx.Hook{
 		OnStart: func(context.Context) error {
-			logger.Info("service run")
+			log.Printf("service run")
 			return srv.Run()
 		},
 	})
