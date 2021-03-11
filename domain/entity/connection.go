@@ -3,7 +3,7 @@ package entity
 import (
 	"encoding/json"
 
-	"github.com/duolacloud/microbase/proto/api"
+	"github.com/duolacloud/microbase/proto/pagination"
 	"github.com/thoas/go-funk"
 )
 
@@ -18,7 +18,7 @@ type ConnectionQuery struct {
 	NeedTotal bool                   `json:"needTotal"`
 }
 
-func (c *ConnectionQuery) FromPB(q *api.ConnectionQuery) {
+func (c *ConnectionQuery) FromPB(q *pagination.ConnectionQuery) {
 	var filter map[string]interface{}
 	if len(q.Filter) != 0 {
 		_ = json.Unmarshal([]byte(q.Filter), &filter)
@@ -55,9 +55,9 @@ func (c *ConnectionQuery) FromPB(q *api.ConnectionQuery) {
 	c.Filter = filter
 	c.Fields = q.Fields
 	c.NeedTotal = q.NeedTotal
-	c.Orders = funk.Map(q.Orders, func(o *api.OrderSpec) *Order {
+	c.Orders = funk.Map(q.Orders, func(o *pagination.OrderSpec) *Order {
 		var direction OrderDirection
-		if o.Direction == api.OrderDirection_DESC {
+		if o.Direction == pagination.OrderDirection_DESC {
 			direction = OrderDirectionDesc
 		} else {
 			direction = OrderDirectionAsc
@@ -88,8 +88,8 @@ type PageInfo struct {
 	StartCursor string `json:"startCursor"` // 结果集中的结束游标值
 }
 
-func (p *PageInfo) ToPB() *api.PageInfo {
-	return &api.PageInfo{
+func (p *PageInfo) ToPB() *pagination.PageInfo {
+	return &pagination.PageInfo{
 		HasPrevious: p.HasPrevious,
 		HasNext:     p.HasNext,
 		EndCursor:   p.EndCursor,

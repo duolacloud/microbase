@@ -42,7 +42,7 @@ message ConnectionQuery {
 message Connection {
   PageInfo pageInfo  = 1;
   int64 total = 2;
-  Edge edges = 3;
+  repeated Edge edges = 3;
 }
 
 message Edge {
