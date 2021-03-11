@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/domain/repository/mongo/reflect"
 	"github.com/duolacloud/microbase/types/smarttime"
 	"gopkg.in/mgo.v2/bson"
@@ -18,10 +18,10 @@ func buildQuery(ms *reflect.StructInfo, filters map[string]interface{}) (bson.M,
 	}
 
 	for k, v := range filters {
-		filterType := model.FilterType(k)
+		filterType := entity.FilterType(k)
 
 		switch filterType {
-		case model.FilterType_AND:
+		case entity.FilterType_AND:
 			subFilters, ok := v.([]interface{})
 			if !ok {
 				return nil, errors.New("ERR_MALFORMED_PARAMETERS")
@@ -41,7 +41,7 @@ func buildQuery(ms *reflect.StructInfo, filters map[string]interface{}) (bson.M,
 				subBFilters[i] = subBFilter
 			}
 			bFilters["$and"] = subBFilters
-		case model.FilterType_OR:
+		case entity.FilterType_OR:
 			subFilters, ok := v.([]interface{})
 			if !ok {
 				return nil, errors.New("ERR_MALFORMED_PARAMETERS")
@@ -61,7 +61,7 @@ func buildQuery(ms *reflect.StructInfo, filters map[string]interface{}) (bson.M,
 				subBFilters[i] = subBFilter
 				bFilters["$or"] = subBFilters
 			}
-		case model.FilterType_NOR:
+		case entity.FilterType_NOR:
 			subFilters, ok := v.([]interface{})
 			if !ok {
 				return nil, errors.New("ERR_MALFORMED_PARAMETERS")
@@ -120,33 +120,33 @@ func buildMongoFilter(field *reflect.StructField, value interface{}) (bson.M, er
 			}
 		}
 
-		filterType := model.FilterType(vKey)
+		filterType := entity.FilterType(vKey)
 		switch filterType {
-		case model.FilterType_EQ:
+		case entity.FilterType_EQ:
 			return bson.M{"$eq": vValue}, nil
-		case model.FilterType_NE:
+		case entity.FilterType_NE:
 			return bson.M{"$ne": vValue}, nil
-		case model.FilterType_GT:
+		case entity.FilterType_GT:
 			return bson.M{"$gt": vValue}, nil
-		case model.FilterType_GTE:
+		case entity.FilterType_GTE:
 			return bson.M{"$gte": vValue}, nil
-		case model.FilterType_LT:
+		case entity.FilterType_LT:
 			return bson.M{"$lt": vValue}, nil
-		case model.FilterType_LTE:
+		case entity.FilterType_LTE:
 			return bson.M{"$lte": vValue}, nil
-		case model.FilterType_LIKE:
+		case entity.FilterType_LIKE:
 			return bson.M{"$regex": vValue}, nil
-		case model.FilterType_MATCH:
+		case entity.FilterType_MATCH:
 			return bson.M{"$regex": vValue}, nil
-		case model.FilterType_NOT_LIKE:
+		case entity.FilterType_NOT_LIKE:
 			return bson.M{"$not": bson.M{"$regex": vValue}}, nil
-		case model.FilterType_IN:
+		case entity.FilterType_IN:
 			return bson.M{"$in": vValue}, nil
-		case model.FilterType_NOT_IN:
+		case entity.FilterType_NOT_IN:
 			return bson.M{"$nin": vValue}, nil
-		case model.FilterType_IS_NULL:
+		case entity.FilterType_IS_NULL:
 			return bson.M{"$exists": false}, nil
-		case model.FilterType_NOT_NULL:
+		case entity.FilterType_NOT_NULL:
 			return bson.M{"$exists": true}, nil
 		default:
 			return nil, errors.New("ERR_MALFORMED_FILTER_TYPE")
@@ -155,26 +155,30 @@ func buildMongoFilter(field *reflect.StructField, value interface{}) (bson.M, er
 	return bson.M{}, nil
 }
 
-func buildSort(ms *reflect.StructInfo, sorts []*model.SortSpec) ([]string, error) {
-	bsorts := []string{}
-	if sorts != nil {
-		for _, s := range sorts {
-			if _, ok := ms.FieldsMap[s.Property]; !ok {
-				return nil, errors.New(fmt.Sprintf("ERR_DB_UNKNOWN_FIELD %s", s.Property))
-			}
-			var s1 string
-			switch s.Type {
-			case model.SortDirection_DSC:
-				{
-					s1 = fmt.Sprintf("-%s", s.Property)
-				}
-			default: // SortDirection_ASC
-				{
-					s1 = s.Property
-				}
-			}
-			bsorts = append(bsorts, s1)
-		}
+func applyOrders(ms *reflect.StructInfo, sorts []*entity.Order) ([]string, error) {
+	if orders == nil {
+		return nil, nil
 	}
-	return bsorts, nil
+
+	borders := make([]string{}, len(orders))
+
+	for _, s := range orders {
+		if _, ok := ms.FieldsMap[s.Property]; !ok {
+			return nil, errors.New(fmt.Sprintf("ERR_DB_UNKNOWN_FIELD %s", s.Property))
+		}
+		var s1 string
+		switch s.Type {
+		case entity.OrderDirectionDesc:
+			{
+				s1 = fmt.Sprintf("-%s", s.Property)
+			}
+		default: // SortDirection_ASC
+			{
+				s1 = s.Property
+			}
+		}
+		borders = append(borders, s1)
+	}
+
+	return borders, nil
 }

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/duolacloud/microbase/database/mongo"
-	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/micro/go-micro/v2/config"
 	"github.com/micro/go-micro/v2/config/source/memory"
 	"github.com/stretchr/testify/assert"
@@ -164,7 +164,7 @@ func TestCrud(t *testing.T) {
 	}
 
 	{
-		pageQuery := &model.PageQuery{
+		pageQuery := &entity.PageQuery{
 			Filters: map[string]interface{}{
 				"name": "赵云",
 				"age": map[string]interface{}{
@@ -203,9 +203,9 @@ func TestCrud(t *testing.T) {
 		t1 := user1.Ctime.Add(h)
 		cursor := t1.UnixNano() / 1e6
 
-		cursorQuery := &model.CursorQuery{
+		cursorQuery := &entity.CursorQuery{
 			Filters: map[string]interface{}{},
-			CursorSort: &model.SortSpec{
+			CursorSort: &entity.SortSpec{
 				Property: "ctime",
 			},
 			Cursor: cursor,
@@ -235,7 +235,7 @@ func TestCrud(t *testing.T) {
 		log.Info("删除记录成功")
 
 		items := make([]*User, 0)
-		total, pageCount, err := userRepo.Page(context.Background(), &User{}, &model.PageQuery{
+		total, pageCount, err := userRepo.Page(context.Background(), &User{}, &entity.PageQuery{
 			Filters:  map[string]interface{}{},
 			PageSize: 10,
 			PageNo:   1,
@@ -249,7 +249,7 @@ func TestCrud(t *testing.T) {
 		log.Info("删除记录成功")
 
 		items = make([]*User, 0)
-		total, pageCount, err = userRepo.Page(context.Background(), &User{}, &model.PageQuery{
+		total, pageCount, err = userRepo.Page(context.Background(), &User{}, &entity.PageQuery{
 			Filters:  map[string]interface{}{},
 			PageSize: 10,
 			PageNo:   1,

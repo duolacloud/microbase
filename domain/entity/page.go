@@ -1,4 +1,4 @@
-package model
+package entity
 
 type PageQuery struct {
 	Filter   map[string]interface{} `json:"filter"`

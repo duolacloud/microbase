@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/duolacloud/microbase/database/mongo"
-	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/domain/repository"
 	reflect2 "github.com/duolacloud/microbase/domain/repository/mongo/reflect"
 	breflect "github.com/duolacloud/microbase/reflect"
@@ -23,7 +23,7 @@ func NewBaseRepository(db *mongo.DB) repository.BaseRepository {
 	return &baseRepository{db}
 }
 
-func (r *baseRepository) Create(c context.Context, m model.Model) error {
+func (r *baseRepository) Create(c context.Context, m entity.Model) error {
 	ms, err := reflect2.GetStructInfo(m, nil)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func (r *baseRepository) Create(c context.Context, m model.Model) error {
 	})
 }
 
-func (r *baseRepository) Upsert(c context.Context, m model.Model) (changeInfo *repository.ChangeInfo, err error) {
+func (r *baseRepository) Upsert(c context.Context, m entity.Model) (changeInfo *repository.ChangeInfo, err error) {
 	ms, err := reflect2.GetStructInfo(m, nil)
 	if err != nil {
 		return
@@ -62,7 +62,7 @@ func (r *baseRepository) Upsert(c context.Context, m model.Model) (changeInfo *r
 	return
 }
 
-func (r *baseRepository) Update(c context.Context, m model.Model, change interface{}) error {
+func (r *baseRepository) Update(c context.Context, m entity.Model, change interface{}) error {
 	ms, err := reflect2.GetStructInfo(m, nil)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func (r *baseRepository) Update(c context.Context, m model.Model, change interfa
 	})
 }
 
-func (r *baseRepository) Get(c context.Context, m model.Model) error {
+func (r *baseRepository) Get(c context.Context, m entity.Model) error {
 	ms, err := reflect2.GetStructInfo(m, nil)
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func (r *baseRepository) Get(c context.Context, m model.Model) error {
 	})
 }
 
-func (r *baseRepository) Delete(c context.Context, m model.Model) error {
+func (r *baseRepository) Delete(c context.Context, m entity.Model) error {
 	ms, err := reflect2.GetStructInfo(m, nil)
 	if err != nil {
 		return err
@@ -100,7 +100,7 @@ func (r *baseRepository) Delete(c context.Context, m model.Model) error {
 	})
 }
 
-func (r *baseRepository) Page(c context.Context, m model.Model, query *model.PageQuery, resultPtr interface{}) (total int, pageCount int, err error) {
+func (r *baseRepository) Page(c context.Context, m entity.Model, query *entity.PageQuery, resultPtr interface{}) (total int, pageCount int, err error) {
 	ms, err := reflect2.GetStructInfo(m, nil)
 	if err != nil {
 		return
@@ -112,7 +112,7 @@ func (r *baseRepository) Page(c context.Context, m model.Model, query *model.Pag
 		return
 	}
 
-	sorts, err := buildSort(ms, query.Sort)
+	sorts, err := applyOrders(ms, query.Sort)
 	if err != nil {
 		return
 	}
@@ -145,7 +145,7 @@ func (r *baseRepository) Page(c context.Context, m model.Model, query *model.Pag
 	return
 }
 
-func (r *baseRepository) List(c context.Context, query *model.CursorQuery, m model.Model, resultPtr interface{}) (extra *model.CursorExtra, err error) {
+func (r *baseRepository) List(c context.Context, query *entity.CursorQuery, m entity.Model, resultPtr interface{}) (extra *entity.CursorExtra, err error) {
 	ms, err := reflect2.GetStructInfo(m, nil)
 	if err != nil {
 		return
@@ -211,13 +211,13 @@ func (r *baseRepository) List(c context.Context, query *model.CursorQuery, m mod
 
 	var hasPrevious bool
 	var hasNext bool
-	if query.Direction == model.Direction_ASC {
+	if query.Direction == entity.Direction_ASC {
 		hasNext = count == query.Size
-	} else if query.Direction == model.Direction_DSC {
+	} else if query.Direction == entity.Direction_DSC {
 		hasPrevious = count == query.Size
 	}
 
-	extra = &model.CursorExtra{
+	extra = &entity.CursorExtra{
 		Direction:   query.Direction,
 		Size:        size,
 		hasPrevious: hasPrevious,

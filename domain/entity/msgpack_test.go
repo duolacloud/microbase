@@ -1,4 +1,4 @@
-package model_test
+package entity_test
 
 import (
 	"bytes"

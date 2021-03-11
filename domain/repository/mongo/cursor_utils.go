@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/domain/repository/mongo/reflect"
 	"github.com/duolacloud/microbase/types/smarttime"
 	"gopkg.in/mgo.v2/bson"
 )
 
-func mongoCursorFilter(ms *reflect.StructInfo, cursorQuery *model.CursorQuery) (filter bson.M, sort string, reverse bool, err error) {
+func mongoCursorFilter(ms *reflect.StructInfo, cursorQuery *entity.CursorQuery) (filter bson.M, sort string, reverse bool, err error) {
 	prop := cursorQuery.CursorSort.Property
 	field, ok := ms.FieldsMap[prop]
 	if !ok {
@@ -29,7 +29,7 @@ func mongoCursorFilter(ms *reflect.StructInfo, cursorQuery *model.CursorQuery) (
 	}
 
 	switch cursorQuery.CursorSort.Type {
-	case model.SortDirection_DSC:
+	case entity.SortDirection_DSC:
 		{
 			if cursorQuery.Direction == 0 {
 				// 游标前

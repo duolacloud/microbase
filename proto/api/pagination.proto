@@ -4,14 +4,14 @@ package api;
 
 option go_package = "github.com/duolacloud/microbase/proto/api;api";
 
-enum SortDirection {
+enum OrderDirection {
   ASC = 0;
-  DSC = 1;
+  DESC = 1;
 }
 
-message SortOption {
+message OrderSpec {
   string field = 1;
-  SortDirection direction = 2;
+  OrderDirection direction = 2;
 }
 
 message PageInfo {
@@ -20,4 +20,19 @@ message PageInfo {
   bool hasPrevious =3;
   string startCursor = 4;
   string endCursor = 5;
+}
+
+message ConnectionQuery {
+  bool hasFirst = 1;
+  int32 first = 2;
+  bool hasLast = 3;
+  int32 last = 4;
+  bool hasAfter = 5;
+  string after = 6;
+  bool hasBefore = 7;
+  string before = 8;
+  bool needTotal = 9;
+  repeated string fields = 10;
+  string filter = 11;
+  repeated OrderSpec orders = 12;
 }

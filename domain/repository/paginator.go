@@ -3,13 +3,13 @@ package repository
 import (
 	"context"
 
-	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/domain/entity"
 )
 
 type ConnectionPaginator interface {
-	Paginate(c context.Context, query *model.ConnectionQuery) (conn *model.Connection, err error)
+	Paginate(c context.Context, query *entity.ConnectionQuery) (conn *entity.Connection, err error)
 }
 
 type CursorPaginator interface {
-	Paginate(c context.Context, query *model.CursorQuery, resultPtr interface{}) (extra *model.CursorExtra, err error)
+	Paginate(c context.Context, query *entity.CursorQuery, resultPtr interface{}) (extra *entity.CursorExtra, err error)
 }

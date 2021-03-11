@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/logger"
 	"github.com/duolacloud/microbase/types/smarttime"
 	_gorm "github.com/jinzhu/gorm"
@@ -51,10 +51,10 @@ func applyFilter(db *_gorm.DB, ms *_gorm.ModelStruct, filters map[string]interfa
 }
 
 func gormFilter(db *_gorm.DB, ms *_gorm.ModelStruct, key string, value interface{}) (*_gorm.DB, error) {
-	filterType := model.FilterType(key)
+	filterType := entity.FilterType(key)
 
 	switch filterType {
-	case model.FilterType_AND:
+	case entity.FilterType_AND:
 		{
 			/* TODO 暂时默认就是 AND
 			subFilters := v.([]interface{})
@@ -62,7 +62,7 @@ func gormFilter(db *_gorm.DB, ms *_gorm.ModelStruct, key string, value interface
 				db = buildQuery(db, subFilter, ms)
 			}*/
 		}
-	case model.FilterType_OR:
+	case entity.FilterType_OR:
 		{
 			/* TODO  暂时不支持 page 中支持 or
 			for _, item := range subFilters {
@@ -103,35 +103,35 @@ func gormFilter(db *_gorm.DB, ms *_gorm.ModelStruct, key string, value interface
 					}
 				}
 
-				filterType = model.FilterType(vKey)
+				filterType = entity.FilterType(vKey)
 				switch filterType {
-				case model.FilterType_EQ:
+				case entity.FilterType_EQ:
 					return db.Where(fmt.Sprintf("%s = ?", fieldName), vValue), nil
-				case model.FilterType_NE:
+				case entity.FilterType_NE:
 					return db.Where(fmt.Sprintf("%s != ?", fieldName), vValue), nil
-				case model.FilterType_GT:
+				case entity.FilterType_GT:
 					return db.Where(fmt.Sprintf("%s > ?", fieldName), vValue), nil
-				case model.FilterType_GTE:
+				case entity.FilterType_GTE:
 					return db.Where(fmt.Sprintf("%s >= ?", fieldName), vValue), nil
-				case model.FilterType_LT:
+				case entity.FilterType_LT:
 					return db.Where(fmt.Sprintf("%s < ?", fieldName), vValue), nil
-				case model.FilterType_LTE:
+				case entity.FilterType_LTE:
 					return db.Where(fmt.Sprintf("%s <= ?", fieldName), vValue), nil
-				case model.FilterType_LIKE:
+				case entity.FilterType_LIKE:
 					return db.Where(fmt.Sprintf("%s LIKE ?", fieldName), vValue), nil
-				case model.FilterType_MATCH:
+				case entity.FilterType_MATCH:
 					return db.Where(fmt.Sprintf("%s LIKE ?", fieldName), vValue), nil
-				case model.FilterType_NOT_LIKE:
+				case entity.FilterType_NOT_LIKE:
 					return db.Not(fmt.Sprintf("%s LIKE ?", fieldName), vValue), nil
-				case model.FilterType_IN:
+				case entity.FilterType_IN:
 					return gormFilterIn(db, fieldName, vValue)
-				case model.FilterType_NOT_IN:
+				case entity.FilterType_NOT_IN:
 					return gormFilterNotIn(db, fieldName, vValue)
-				case model.FilterType_BETWEEN:
+				case entity.FilterType_BETWEEN:
 					return gormFilterBetween(db, fieldName, vValue)
-				case model.FilterType_IS_NULL:
+				case entity.FilterType_IS_NULL:
 					return db.Where(fmt.Sprintf("%s IS NULL", fieldName)), nil
-				case model.FilterType_NOT_NULL:
+				case entity.FilterType_NOT_NULL:
 					return db.Where(fmt.Sprintf("%s IS NOT NULL", fieldName)), nil
 				}
 			}
@@ -178,7 +178,7 @@ func gormFilterBetween(db *_gorm.DB, key string, value interface{}) (*_gorm.DB, 
 	}
 }
 
-func applyOrders(dbHandler *_gorm.DB, ms *_gorm.ModelStruct, orders []*model.Order) (*_gorm.DB, error) {
+func applyOrders(dbHandler *_gorm.DB, ms *_gorm.ModelStruct, orders []*entity.Order) (*_gorm.DB, error) {
 	if orders == nil || len(orders) == 0 {
 		return dbHandler, nil
 	}

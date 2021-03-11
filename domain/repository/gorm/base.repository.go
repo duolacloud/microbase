@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/duolacloud/microbase/database/gorm/opentracing"
-	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/domain/repository"
 	breflect "github.com/duolacloud/microbase/reflect"
 	_gorm "github.com/jinzhu/gorm"
@@ -28,7 +28,7 @@ func (r *BaseRepository) DB(c context.Context) (*_gorm.DB, error) {
 	return db.(*_gorm.DB), nil
 }
 
-func (r *BaseRepository) Create(c context.Context, m model.Model) error {
+func (r *BaseRepository) Create(c context.Context, m entity.Entity) error {
 	db, err := r.DB(c)
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func (r *BaseRepository) Create(c context.Context, m model.Model) error {
 	return db.Create(m).Error
 }
 
-func (r *BaseRepository) Upsert(c context.Context, m model.Model) (*repository.ChangeInfo, error) {
+func (r *BaseRepository) Upsert(c context.Context, m entity.Entity) (*repository.ChangeInfo, error) {
 	db, err := r.DB(c)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (r *BaseRepository) Upsert(c context.Context, m model.Model) (*repository.C
 	return change, nil
 }
 
-func (r *BaseRepository) Update(c context.Context, m model.Model, data interface{}) error {
+func (r *BaseRepository) Update(c context.Context, m entity.Entity, data interface{}) error {
 	db, err := r.DB(c)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (r *BaseRepository) Update(c context.Context, m model.Model, data interface
 	return db.Model(m).Update(data).Error
 }
 
-func (r *BaseRepository) Get(c context.Context, m model.Model) error {
+func (r *BaseRepository) Get(c context.Context, m entity.Entity) error {
 	db, err := r.DB(c)
 	if err != nil {
 		return err
@@ -86,7 +86,7 @@ func (r *BaseRepository) Get(c context.Context, m model.Model) error {
 	return db.Where(m.Unique()).Take(m).Error
 }
 
-func (r *BaseRepository) Delete(c context.Context, m model.Model) error {
+func (r *BaseRepository) Delete(c context.Context, m entity.Entity) error {
 	db, err := r.DB(c)
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func (r *BaseRepository) Delete(c context.Context, m model.Model) error {
 	return db.Delete(m).Error
 }
 
-func (r *BaseRepository) Page(c context.Context, m model.Model, query *model.PageQuery, resultPtr interface{}) (total int, pageCount int, err error) {
+func (r *BaseRepository) Page(c context.Context, m entity.Entity, query *entity.PageQuery, resultPtr interface{}) (total int, pageCount int, err error) {
 	db, err := r.DB(c)
 	if err != nil {
 		return
@@ -133,26 +133,26 @@ func (r *BaseRepository) Page(c context.Context, m model.Model, query *model.Pag
 	return
 }
 
-func (r *BaseRepository) List(c context.Context, query *model.CursorQuery, m model.Model, resultPtr interface{}) (extra *model.CursorExtra, err error) {
+func (r *BaseRepository) List(c context.Context, query *entity.CursorQuery, entity entity.Entity, resultPtr interface{}) (extra *entity.CursorExtra, err error) {
 	db, err := r.DB(c)
 	if err != nil {
 		return
 	}
 
-	paginator := NewCursorPaginator(db, m)
+	paginator := NewCursorPaginator(db, entity)
 
 	extra, err = paginator.Paginate(c, query, resultPtr)
 
 	return
 }
 
-func (r *BaseRepository) Connection(c context.Context, query *model.ConnectionQuery, m model.Model) (*model.Connection, error) {
+func (r *BaseRepository) Connection(c context.Context, query *entity.ConnectionQuery, entity entity.Entity) (*entity.Connection, error) {
 	db, err := r.DB(c)
 	if err != nil {
 		return nil, err
 	}
 
-	paginator := NewConnectionPaginator(db, m)
+	paginator := NewConnectionPaginator(db, entity)
 
 	return paginator.Paginate(c, query)
 }

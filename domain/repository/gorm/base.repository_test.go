@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/duolacloud/microbase/database/gorm"
-	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/domain/repository"
 	"github.com/duolacloud/microbase/multitenancy"
 	_gorm "github.com/jinzhu/gorm"
@@ -168,7 +168,7 @@ func TestCrud(t *testing.T) {
 	}
 
 	{
-		pageQuery := &model.PageQuery{
+		pageQuery := &entity.PageQuery{
 			Filter: map[string]interface{}{
 				"name": "赵云",
 				"age": map[string]interface{}{
@@ -210,7 +210,7 @@ func TestCrud(t *testing.T) {
 		logger.Info("删除记录成功")
 
 		items := make([]*User, 0)
-		total, pageCount, err := userRepo.Page(context.Background(), &User{}, &model.PageQuery{
+		total, pageCount, err := userRepo.Page(context.Background(), &User{}, &entity.PageQuery{
 			Filter:   map[string]interface{}{},
 			PageSize: 10,
 			PageNo:   1,
@@ -227,7 +227,7 @@ func TestCrud(t *testing.T) {
 		logger.Info("删除记录成功")
 
 		items = make([]*User, 0)
-		total, pageCount, err = userRepo.Page(context.Background(), &User{}, &model.PageQuery{
+		total, pageCount, err = userRepo.Page(context.Background(), &User{}, &entity.PageQuery{
 			Filter:   map[string]interface{}{},
 			PageSize: 10,
 			PageNo:   1,
@@ -272,13 +272,13 @@ func testCursorList(t *testing.T, repo repository.BaseRepository) {
 
 	var cursor string
 	for {
-		cursorQuery := &model.CursorQuery{
+		cursorQuery := &entity.CursorQuery{
 			NeedTotal: true,
 			Cursor:    cursor,
 			Fields:    []string{"name", "age"},
-			Direction: model.CursorDirectionBefore,
+			Direction: entity.CursorDirectionBefore,
 			Filter:    map[string]interface{}{},
-			Orders: []*model.Order{
+			Orders: []*entity.Order{
 				{
 					Field: "name",
 				},
@@ -350,12 +350,12 @@ func testConnectionPaginate(t *testing.T, repo repository.BaseRepository) {
 	var after string
 	first := 7
 	for {
-		connQuery := &model.ConnectionQuery{
+		connQuery := &entity.ConnectionQuery{
 			NeedTotal: true,
 			After:     &after,
 			Fields:    []string{"name", "ctime"},
 			Filter:    map[string]interface{}{},
-			Orders: []*model.Order{
+			Orders: []*entity.Order{
 				{
 					Field: "name",
 				},

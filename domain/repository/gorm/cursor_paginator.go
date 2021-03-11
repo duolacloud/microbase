@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/domain/repository"
 	"github.com/duolacloud/microbase/logger"
 	breflect "github.com/duolacloud/microbase/reflect"
@@ -18,41 +18,41 @@ import (
 
 type cursorPaginator struct {
 	db          *_gorm.DB
-	model       model.Model
+	entity      entity.Entity
 	modelStruct *_gorm.ModelStruct
 }
 
-func NewCursorPaginator(db *_gorm.DB, model model.Model) repository.CursorPaginator {
-	modelStruct := db.NewScope(model).GetModelStruct()
+func NewCursorPaginator(db *_gorm.DB, entity entity.Entity) repository.CursorPaginator {
+	modelStruct := db.NewScope(entity).GetModelStruct()
 
 	return &cursorPaginator{
 		db,
-		model,
+		entity,
 		modelStruct,
 	}
 }
 
-func (p *cursorPaginator) Paginate(c context.Context, query *model.CursorQuery, resultPtr interface{}) (extra *model.CursorExtra, err error) {
+func (p *cursorPaginator) Paginate(c context.Context, query *entity.CursorQuery, resultPtr interface{}) (extra *entity.CursorExtra, err error) {
 	if len(p.modelStruct.PrimaryFields) == 0 {
-		err = errors.New("no primary key found for model")
+		err = errors.New("no primary key found for entity")
 		return
 	}
 
 	if query.Orders == nil {
 		fieldIDs := p.modelStruct.PrimaryFields
-		query.Orders = make([]*model.Order, len(fieldIDs))
+		query.Orders = make([]*entity.Order, len(fieldIDs))
 		for i, fieldID := range fieldIDs {
-			order := &model.Order{
+			order := &entity.Order{
 				Field:     fieldID.DBName,
-				Direction: model.OrderDirectionAsc,
+				Direction: entity.OrderDirectionAsc,
 			}
 			query.Orders[i] = order
 		}
 	}
 
-	extra = &model.CursorExtra{}
+	extra = &entity.CursorExtra{}
 
-	dbHandler := p.db.Model(p.model)
+	dbHandler := p.db.Model(p.entity)
 	dbHandler, err = applyFilter(dbHandler, p.modelStruct, query.Filter)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (p *cursorPaginator) Paginate(c context.Context, query *model.CursorQuery, 
 		return nil, err
 	}
 
-	dbHandler, err = p.applyOrders(dbHandler, query.Orders, query.Direction == model.CursorDirectionBefore)
+	dbHandler, err = p.applyOrders(dbHandler, query.Orders, query.Direction == entity.CursorDirectionBefore)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (p *cursorPaginator) Paginate(c context.Context, query *model.CursorQuery, 
 			orderFieldValues[i] = v.Interface()
 		}
 
-		cursor := &model.Cursor{
+		cursor := &entity.Cursor{
 			Value: orderFieldValues,
 		}
 
@@ -138,9 +138,9 @@ func (p *cursorPaginator) Paginate(c context.Context, query *model.CursorQuery, 
 	return
 }
 
-func (p *cursorPaginator) applyCursor(queryHandler *_gorm.DB, query *model.CursorQuery) (*_gorm.DB, error) {
+func (p *cursorPaginator) applyCursor(queryHandler *_gorm.DB, query *entity.CursorQuery) (*_gorm.DB, error) {
 	if len(query.Cursor) > 0 {
-		cursor := &model.Cursor{}
+		cursor := &entity.Cursor{}
 		err := cursor.Unmarshal(query.Cursor)
 		if err != nil {
 			return nil, err
@@ -178,16 +178,16 @@ func (p *cursorPaginator) applyCursor(queryHandler *_gorm.DB, query *model.Curso
 			}
 		}
 
-		if query.Direction == model.CursorDirectionAfter {
+		if query.Direction == entity.CursorDirectionAfter {
 			// after
-			if query.Orders[0].Direction == model.OrderDirectionDesc {
+			if query.Orders[0].Direction == entity.OrderDirectionDesc {
 				queryHandler = queryHandler.Where(fmt.Sprintf("(%s) < (?)", strings.Join(fields, ",")), values)
 			} else {
 				queryHandler = queryHandler.Where(fmt.Sprintf("(%s) > (?)", strings.Join(fields, ",")), values)
 			}
 		} else {
 			// before
-			if query.Orders[0].Direction == model.OrderDirectionDesc {
+			if query.Orders[0].Direction == entity.OrderDirectionDesc {
 				queryHandler = queryHandler.Where(fmt.Sprintf("(%s) > (?)", strings.Join(fields, ",")), values)
 			} else {
 				queryHandler = queryHandler.Where(fmt.Sprintf("(%s) < (?)", strings.Join(fields, ",")), values)
@@ -198,7 +198,7 @@ func (p *cursorPaginator) applyCursor(queryHandler *_gorm.DB, query *model.Curso
 	return queryHandler, nil
 }
 
-func (p *cursorPaginator) applyOrders(queryHandler *_gorm.DB, orders []*model.Order, reverse bool) (*_gorm.DB, error) {
+func (p *cursorPaginator) applyOrders(queryHandler *_gorm.DB, orders []*entity.Order, reverse bool) (*_gorm.DB, error) {
 	for _, order := range orders {
 		if reverse {
 			order.Direction = order.Direction.Reverse()
