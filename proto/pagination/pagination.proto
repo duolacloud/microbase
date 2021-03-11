@@ -11,7 +11,7 @@ enum OrderDirection {
   DESC = 1;
 }
 
-message OrderSpec {
+message Order {
   string field = 1;
   OrderDirection direction = 2;
 }
@@ -36,7 +36,7 @@ message ConnectionQuery {
   bool needTotal = 9;
   repeated string fields = 10;
   string filter = 11;
-  repeated OrderSpec orders = 12;
+  repeated Order orders = 12;
 }
 
 message Connection {

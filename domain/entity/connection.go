@@ -55,7 +55,7 @@ func (c *ConnectionQuery) FromPB(q *pagination.ConnectionQuery) {
 	c.Filter = filter
 	c.Fields = q.Fields
 	c.NeedTotal = q.NeedTotal
-	c.Orders = funk.Map(q.Orders, func(o *pagination.OrderSpec) *Order {
+	c.Orders = funk.Map(q.Orders, func(o *pagination.Order) *Order {
 		var direction OrderDirection
 		if o.Direction == pagination.OrderDirection_DESC {
 			direction = OrderDirectionDesc
