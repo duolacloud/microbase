@@ -24,8 +24,8 @@ type User struct {
 	ID    string     `json:"id" gorm:"primary_key"`
 	Name  string     `json:"name"`
 	Age   int        `json:"age"`
-	Ctime time.Time  `json:"ctime" gorm:"update_time_stamp"`
-	Mtime time.Time  `json:"mtime" gorm:"update_time_stamp"`
+	Ctime time.Time  `json:"ctime"`
+	Mtime time.Time  `json:"mtime"`
 	Dtime *time.Time `json:"dtime"`
 }
 
@@ -134,8 +134,11 @@ func TestCrud(t *testing.T) {
 	}
 
 	{
-		user1.Name = "赵云"
-		err := userRepo.Update(context.Background(), user1, user1)
+		user4 := &User{
+			ID:   user1.ID,
+			Name: "赵云",
+		}
+		err := userRepo.Update(context.Background(), user4, user4)
 		if assert.Error(err) {
 			t.Fatal(err)
 		}
