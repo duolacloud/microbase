@@ -15,13 +15,28 @@ func deleteCallback(scope *gorm.Scope) {
 			extraOption = fmt.Sprint(str)
 		}
 
-		deletedOnField, hasDeletedOnField := scope.FieldByName("dtime")
+		deleteTimeField, hasDeleteTimeField := scope.FieldByName("dtime")
+		deletedField, hasDeletedField := scope.FieldByName("deleted")
 
-		if !scope.Search.Unscoped && hasDeletedOnField {
+		if !scope.Search.Unscoped && hasDeleteTimeField && hasDeletedField {
+			scope.Raw(fmt.Sprintf(
+				"UPDATE %v SET %v=%v,%v=%v%v%v",
+				scope.QuotedTableName(),
+				scope.Quote(deleteTimeField.DBName),
+				scope.AddToVars(time.Now()),
+				scope.Quote(deletedField.DBName),
+				scope.AddToVars(1),
+				// 组合SQL.比如 update users set a = 1 and b = 2 (where id = x) 后面的sql
+				addExtraSpaceIfExist(scope.CombinedConditionSql()),
+				// db.Set("gorm:delete_option", "OPTION (OPTIMIZE FOR UNKNOWN)").Delete(&email)
+				// DELETE from emails where id=10 OPTION (OPTIMIZE FOR UNKNOWN);
+				addExtraSpaceIfExist(extraOption),
+			)).Exec()
+		} else if !scope.Search.Unscoped && hasDeleteTimeField {
 			scope.Raw(fmt.Sprintf(
 				"UPDATE %v SET %v=%v%v%v",
 				scope.QuotedTableName(),
-				scope.Quote(deletedOnField.DBName),
+				scope.Quote(deleteTimeField.DBName),
 				scope.AddToVars(time.Now()),
 				addExtraSpaceIfExist(scope.CombinedConditionSql()),
 				addExtraSpaceIfExist(extraOption),

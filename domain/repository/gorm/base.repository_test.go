@@ -27,6 +27,7 @@ type User struct {
 	CreateTime time.Time  `json:"ctime" gorm:"column:ctime"`
 	UpdateTime time.Time  `json:"mtime" gorm:"column:utime"`
 	DeleteTime *time.Time `json:"dtime" gorm:"column:dtime"`
+	Deleted    bool       `json:"deleted"`
 }
 
 func (u *User) BeforeCreate(scope *_gorm.Scope) error {
