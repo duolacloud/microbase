@@ -57,7 +57,7 @@ func StartMicroService(lifecycle fx.Lifecycle, srv micro.Service) {
 
 	lifecycle.Append(fx.Hook{
 		OnStart: func(context.Context) error {
-			logger.Infof("service run")
+			logger.Info("service run")
 			return srv.Run()
 		},
 	})
