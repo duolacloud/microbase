@@ -8,9 +8,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/duolacloud/microbase/domain/model"
+	"github.com/duolacloud/microbase/domain/repository"
 	"github.com/duolacloud/microbase/logger"
 	breflect "github.com/duolacloud/microbase/reflect"
 	"github.com/duolacloud/microbase/types/smarttime"
@@ -23,7 +25,7 @@ type connectionPaginator struct {
 	modelStruct *_gorm.ModelStruct
 }
 
-func NewConnectionPaginator(db *_gorm.DB, model model.Model) *repository.ConnectionPaginator {
+func NewConnectionPaginator(db *_gorm.DB, model model.Model) repository.ConnectionPaginator {
 	modelStruct := db.NewScope(model).GetModelStruct()
 
 	return &connectionPaginator{
@@ -33,14 +35,26 @@ func NewConnectionPaginator(db *_gorm.DB, model model.Model) *repository.Connect
 	}
 }
 
+func validateFirstLast(first, last *int) error {
+	switch {
+	case first != nil && last != nil:
+		return errors.New("Passing both `first` and `last` to paginate a connection is not supported.")
+	case first != nil && *first < 0:
+		return errors.New("`first` on a connection cannot be less than zero.")
+	case last != nil && *last < 0:
+		return errors.New("`last` on a connection cannot be less than zero.")
+	}
+	return nil
+}
+
 func (p *connectionPaginator) Paginate(c context.Context, query *model.ConnectionQuery) (conn *model.Connection, err error) {
 	if len(p.modelStruct.PrimaryFields) == 0 {
 		err = errors.New("no primary key found for model")
 		return
 	}
 
-	if len(p.modelStruct.PrimaryFields) != 1 {
-		err = errors.New("more then one primary key found for model")
+	err = validateFirstLast(query.First, query.Last)
+	if err != nil {
 		return
 	}
 
@@ -62,24 +76,60 @@ func (p *connectionPaginator) Paginate(c context.Context, query *model.Connectio
 		return nil, err
 	}
 
+	conn = &model.Connection{Edges: []*model.Edge{}}
+	if query.First != nil && *query.First == 0 ||
+		query.Last != nil && *query.Last == 0 {
+		if query.NeedTotal {
+			if db := dbHandler.Count(&conn.Total); db.Error != nil {
+				err = db.Error
+				return
+			}
+
+			conn.PageInfo.HasNext = query.First != nil && conn.Total > 0
+			conn.PageInfo.HasPrevious = query.Last != nil && conn.Total > 0
+		}
+		return conn, nil
+	}
+
+	if query.NeedTotal {
+		if err = dbHandler.Count(&conn.Total).Error; err != nil {
+			return
+		}
+	}
+
 	dbHandler, err = p.applyCursor(dbHandler, query)
 	if err != nil {
 		return nil, err
 	}
 
-	dbHandler, err = p.applyOrders(dbHandler, query, query.Direction != 0)
+	dbHandler, err = p.applyOrders(dbHandler, query.Orders, query.Last != nil)
 	if err != nil {
 		return nil, err
 	}
 
-	extra = &model.CursorExtra{}
-
-	if query.NeedTotal {
-		dbHandler.Count(&extra.Total)
+	var limit int
+	if query.First != nil {
+		limit = *query.First + 1
+	} else if query.Last != nil {
+		limit = *query.Last + 1
 	}
 
-	limit := query.Size + 1
-	if err = dbHandler.Limit(limit).Find(resultPtr).Error; err != nil {
+	if limit == 0 {
+		limit = 21
+	}
+
+	if limit > 1001 {
+		limit = 1001
+	}
+
+	dbHandler = dbHandler.Limit(limit)
+
+	if len(query.Fields) > 0 {
+		dbHandler = dbHandler.Select(query.Fields)
+	}
+
+	resultPtr := breflect.MakeSlicePtr(p.model, 0, limit)
+	if err = dbHandler.Find(resultPtr).Error; err != nil {
 		return
 	}
 
@@ -89,9 +139,21 @@ func (p *connectionPaginator) Paginate(c context.Context, query *model.Connectio
 	}
 
 	if count == limit {
-		extra.HasNext = true
-		extra.HasPrevious = true
+		conn.PageInfo.HasNext = true
+		conn.PageInfo.HasPrevious = true
 		breflect.SlicePtrSlice3To(resultPtr, 0, limit-1, limit-1, resultPtr)
+	}
+
+	var nodeAt func(int) interface{}
+	if query.Last != nil {
+		n := breflect.SlicePtrLen(resultPtr) - 1
+		nodeAt = func(i int) interface{} {
+			return breflect.SlicePtrIndexOf(resultPtr, n-i)
+		}
+	} else {
+		nodeAt = func(i int) interface{} {
+			return breflect.SlicePtrIndexOf(resultPtr, i)
+		}
 	}
 
 	toCursor := func(item interface{}) (string, error) {
@@ -122,60 +184,113 @@ func (p *connectionPaginator) Paginate(c context.Context, query *model.Connectio
 		return w.String(), nil
 	}
 
-	itemCount := breflect.SlicePtrLen(resultPtr)
-	extra.StartCursor, err = toCursor(breflect.SlicePtrIndexOf(resultPtr, 0))
-	if err != nil {
-		return
+	conn.Edges = make([]*model.Edge, breflect.SlicePtrLen(resultPtr))
+	for i := range conn.Edges {
+		node := nodeAt(i)
+
+		var cursor string
+		cursor, err = toCursor(node)
+		if err != nil {
+			return
+		}
+
+		conn.Edges[i] = &model.Edge{
+			Node:   node,
+			Cursor: cursor,
+		}
 	}
 
-	extra.EndCursor, err = toCursor(breflect.SlicePtrIndexOf(resultPtr, itemCount-1))
-	if err != nil {
-		return
-	}
+	conn.PageInfo.StartCursor = conn.Edges[0].Cursor
+	conn.PageInfo.EndCursor = conn.Edges[len(conn.Edges)-1].Cursor
 
 	return
 }
 
-func (p *CursorPaginator) applyCursor(queryHandler *_gorm.DB, query *model.CursorQuery) (*_gorm.DB, error) {
-	if len(query.Cursor) > 0 {
-		cursor := &model.Cursor{}
-		err := cursor.Unmarshal(query.Cursor)
-		if err != nil {
-			return nil, err
-		}
-
-		// idField := p.modelStruct.PrimaryFields[0]
-
-		if query.Orders != nil {
-			if len(cursor.Value) != len(query.Orders) {
-				return nil, errors.New(fmt.Sprintf("cursor format fields length: %d not match orders fields length: %d", len(cursor.Value), len(query.Orders)))
+func (p *connectionPaginator) applyCursor(queryHandler *_gorm.DB, query *model.ConnectionQuery) (*_gorm.DB, error) {
+	if query.After != nil {
+		if len(*query.After) != 0 {
+			cursor := &model.Cursor{}
+			err := cursor.Unmarshal(*query.After)
+			if err != nil {
+				return nil, err
 			}
 
-			for i, order := range query.Orders {
-				fieldOrder, ok := p.findField(order.Field, queryHandler)
-				if !ok {
-					err := errors.New(fmt.Sprintf("ERR_DB_UNKNOWN_FIELD %s", order.Field))
-					return nil, err
+			if query.Orders != nil {
+				if len(cursor.Value) != len(query.Orders) {
+					return nil, errors.New(fmt.Sprintf("cursor format fields length: %d not match orders fields length: %d", len(cursor.Value), len(query.Orders)))
 				}
 
-				var cursorValue interface{}
+				fields := make([]string, len(query.Orders))
+				values := make([]interface{}, len(query.Orders))
 
-				switch fieldOrder.Struct.Type.String() {
-				case "time.Time", "*time.Time":
-					v, err := smarttime.Parse(cursor.Value[i])
-					if err == nil {
-						cursorValue = time.Time(v)
+				for i, order := range query.Orders {
+					fieldOrder, ok := p.findField(order.Field, queryHandler)
+					if !ok {
+						err := errors.New(fmt.Sprintf("ERR_DB_UNKNOWN_FIELD %s", order.Field))
+						return nil, err
 					}
-				default:
-					cursorValue = cursor.Value[i]
+					fields[i] = order.Field
+
+					switch fieldOrder.Struct.Type.String() {
+					case "time.Time", "*time.Time":
+						v, err := smarttime.Parse(cursor.Value[i])
+						if err == nil {
+							values[i] = time.Time(v)
+						}
+					default:
+						values[i] = cursor.Value[i]
+					}
 				}
 
-				if query.Direction == 0 {
-					queryHandler = queryHandler.Where(fmt.Sprintf("%s > ?", order.Field), cursorValue)
-					// queryHandler = queryHandler.Where(fmt.Sprintf("%s > ?", idField.DBName), cursor.ID)
+				// 以第一个排序字段的顺序为准, 合并比较
+				if query.Orders[0].Direction != model.OrderDirectionDesc {
+					queryHandler = queryHandler.Where(fmt.Sprintf("(%s) > (?)", strings.Join(fields, ",")), values)
 				} else {
-					queryHandler = queryHandler.Where(fmt.Sprintf("%s < ?", order.Field), cursorValue)
-					// queryHandler = queryHandler.Where(fmt.Sprintf("%s < ?", idField.DBName), cursor.ID)
+					queryHandler = queryHandler.Where(fmt.Sprintf("(%s) < (?)", strings.Join(fields, ",")), values)
+				}
+			}
+		}
+	}
+
+	if query.Before != nil {
+		if len(*query.Before) != 0 {
+			cursor := &model.Cursor{}
+			err := cursor.Unmarshal(*query.Before)
+			if err != nil {
+				return nil, err
+			}
+
+			if query.Orders != nil {
+				if len(cursor.Value) != len(query.Orders) {
+					return nil, errors.New(fmt.Sprintf("cursor format fields length: %d not match orders fields length: %d", len(cursor.Value), len(query.Orders)))
+				}
+
+				fields := make([]string, len(query.Orders))
+				values := make([]interface{}, len(query.Orders))
+
+				for i, order := range query.Orders {
+					fieldOrder, ok := p.findField(order.Field, queryHandler)
+					if !ok {
+						err := errors.New(fmt.Sprintf("ERR_DB_UNKNOWN_FIELD %s", order.Field))
+						return nil, err
+					}
+					fields[i] = order.Field
+
+					switch fieldOrder.Struct.Type.String() {
+					case "time.Time", "*time.Time":
+						v, err := smarttime.Parse(cursor.Value[i])
+						if err == nil {
+							values[i] = time.Time(v)
+						}
+					default:
+						values[i] = cursor.Value[i]
+					}
+				}
+
+				if query.Orders[0].Direction != model.OrderDirectionDesc {
+					queryHandler = queryHandler.Where(fmt.Sprintf("(%s) < (?)", strings.Join(fields, ",")), values)
+				} else {
+					queryHandler = queryHandler.Where(fmt.Sprintf("(%s) > (?)", strings.Join(fields, ",")), values)
 				}
 			}
 		}
@@ -184,8 +299,8 @@ func (p *CursorPaginator) applyCursor(queryHandler *_gorm.DB, query *model.Curso
 	return queryHandler, nil
 }
 
-func (p *CursorPaginator) applyOrders(queryHandler *_gorm.DB, query *model.CursorQuery, reverse bool) (*_gorm.DB, error) {
-	for _, order := range query.Orders {
+func (p *connectionPaginator) applyOrders(queryHandler *_gorm.DB, orders []*model.Order, reverse bool) (*_gorm.DB, error) {
+	for _, order := range orders {
 		if reverse {
 			order.Direction = order.Direction.Reverse()
 		}
@@ -202,7 +317,7 @@ func (p *CursorPaginator) applyOrders(queryHandler *_gorm.DB, query *model.Curso
 }
 
 // 约定 name为小写
-func (p *CursorPaginator) findField(name string, dbHandler *_gorm.DB) (*_gorm.StructField, bool) {
+func (p *connectionPaginator) findField(name string, dbHandler *_gorm.DB) (*_gorm.StructField, bool) {
 	tableName := p.modelStruct.TableName(dbHandler)
 	fieldsMap := fieldsCache[tableName]
 	if fieldsMap == nil {

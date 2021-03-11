@@ -1,18 +1,14 @@
 package model
 
 type ConnectionQuery struct {
-	Filter    map[string]interface{} `json:"filter"`   // 筛选条件
-	HasFirst  bool                   `json:"hasFirst"` // 游标值
-	First     int                    `json:"first"`
-	HasLast   bool                   `json:"hasLast"`
-	Last      string                 `json:"last"`
-	HasBefore bool                   `json:"hasBefore"`
-	Before    string                 `json:"before"`
-	HasAfter  bool                   `json:"hasAfter"`
-	After     string                 `json:"after"`
-
-	Orders    []*Order `json:"order"` // 游标字段&排序
-	NeedTotal bool     `json:"needTotal"`
+	Filter    map[string]interface{} `json:"filter"` // 筛选条件
+	First     *int                   `json:"first"`
+	Last      *int                   `json:"last"`
+	Before    *string                `json:"before"`
+	After     *string                `json:"after"`
+	Fields    []string               `json:"fields"`
+	Orders    []*Order               `json:"order"` // 游标字段&排序
+	NeedTotal bool                   `json:"needTotal"`
 }
 
 type Edge struct {
@@ -21,8 +17,9 @@ type Edge struct {
 }
 
 type Connection struct {
-	Edges    []*Edge   `json:"edges"`
-	PageInfo *PageInfo `json:"pageInfo"`
+	Total    int64    `json:"total"`
+	Edges    []*Edge  `json:"edges"`
+	PageInfo PageInfo `json:"pageInfo"`
 }
 
 type PageInfo struct {

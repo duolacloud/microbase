@@ -37,4 +37,10 @@ type BaseRepository interface {
 	// m	数据指针，仅用于帮助推导数据类型
 	// resultPtr	返回数据的指针
 	List(c context.Context, query *model.CursorQuery, m model.Model, resultPtr interface{}) (cursor *model.CursorExtra, err error)
+
+	// GraphQL 游标查询
+	// @c	上下文
+	// @query	查询条件
+	// m	数据指针，仅用于帮助推导数据类型
+	Connection(c context.Context, query *model.ConnectionQuery, m model.Model) (*model.Connection, error)
 }

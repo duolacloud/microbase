@@ -275,6 +275,8 @@ func testCursorList(t *testing.T, repo repository.BaseRepository) {
 		cursorQuery := &model.CursorQuery{
 			NeedTotal: true,
 			Cursor:    cursor,
+			Fields:    []string{"name", "age"},
+			Direction: model.CursorDirectionBefore,
 			Filter:    map[string]interface{}{},
 			Orders: []*model.Order{
 				{
@@ -284,7 +286,7 @@ func testCursorList(t *testing.T, repo repository.BaseRepository) {
 					Field: "ctime",
 				},
 			},
-			Size: 10,
+			Size: 7,
 		}
 
 		items := make([]*User, 0)
@@ -293,10 +295,12 @@ func testCursorList(t *testing.T, repo repository.BaseRepository) {
 			t.Fatal(err)
 		}
 
-		b, _ := json.Marshal(items)
-		s := string(b)
-		log.Printf("=== items: %s", s)
-		log.Printf("=== extra: %v", extra)
+		// b, _ := json.Marshal(items)
+		// s := string(b)
+		// log.Printf("=== items: %s", s)
+		//log.Printf("=== extra: %v", extra)
+		log.Printf("=== cursor: %v", cursor)
+		log.Printf("=== items count: %d", len(items))
 		log.Printf("=== total: %d", extra.Total)
 		log.Printf("=== startCursor: %s", extra.StartCursor)
 		log.Printf("=== endCursor: %s", extra.EndCursor)
@@ -306,6 +310,81 @@ func testCursorList(t *testing.T, repo repository.BaseRepository) {
 		cursor = extra.EndCursor
 
 		if !extra.HasPrevious || !extra.HasNext {
+			break
+		}
+	}
+
+	logger.Info("游标查询成功")
+}
+
+func TestConnectionPaginate(t *testing.T) {
+	config, err := getConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tenancy, err := getTenancy(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userRepo := NewBaseRepository(repository.NewMultitenancyProvider(tenancy))
+
+	testConnectionPaginate(t, userRepo)
+}
+
+func testConnectionPaginate(t *testing.T, repo repository.BaseRepository) {
+	/*for i := 0; i < 100; i++ {
+		user := &User{
+			Name: "关羽",
+			Age:  38,
+		}
+
+		change, _ := repo.Upsert(context.Background(), user)
+		t.Logf("change: %v", change)
+		time.Sleep(time.Second * 2)
+	}*/
+	// h, _ := time.ParseDuration("1s")
+	// t1 := user1.Ctime.Add(h)
+
+	var after string
+	first := 7
+	for {
+		connQuery := &model.ConnectionQuery{
+			NeedTotal: true,
+			After:     &after,
+			Filter:    map[string]interface{}{},
+			Orders: []*model.Order{
+				{
+					Field: "name",
+				},
+				{
+					Field: "ctime",
+				},
+			},
+			First: &first,
+		}
+
+		conn, err := repo.Connection(context.Background(), connQuery, &User{})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// b, _ := json.Marshal(items)
+		// s := string(b)
+		// log.Printf("=== items: %s", s)
+		//log.Printf("=== extra: %v", extra)
+		log.Printf("=== after: %v", after)
+		log.Printf("=== edges count: %d", len(conn.Edges))
+		log.Printf("=== total: %d", conn.Total)
+		log.Printf("=== startCursor: %s", conn.PageInfo.StartCursor)
+		log.Printf("=== endCursor: %s", conn.PageInfo.EndCursor)
+		log.Printf("=== hasPrevious: %v", conn.PageInfo.HasPrevious)
+		log.Printf("=== hasNext: %v", conn.PageInfo.HasNext)
+
+		after = conn.PageInfo.EndCursor
+
+		if !conn.PageInfo.HasPrevious || !conn.PageInfo.HasNext {
 			break
 		}
 	}

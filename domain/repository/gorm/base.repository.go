@@ -145,3 +145,14 @@ func (r *BaseRepository) List(c context.Context, query *model.CursorQuery, m mod
 
 	return
 }
+
+func (r *BaseRepository) Connection(c context.Context, query *model.ConnectionQuery, m model.Model) (*model.Connection, error) {
+	db, err := r.DB(c)
+	if err != nil {
+		return nil, err
+	}
+
+	paginator := NewConnectionPaginator(db, m)
+
+	return paginator.Paginate(c, query)
+}
