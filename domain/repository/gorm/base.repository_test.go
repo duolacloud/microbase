@@ -21,12 +21,12 @@ import (
 )
 
 type User struct {
-	ID    string     `json:"id" gorm:"primary_key"`
-	Name  string     `json:"name"`
-	Age   int        `json:"age"`
-	Ctime time.Time  `json:"ctime"`
-	Mtime time.Time  `json:"mtime"`
-	Dtime *time.Time `json:"dtime"`
+	ID         string     `json:"id" gorm:"primary_key"`
+	Name       string     `json:"name"`
+	Age        int        `json:"age"`
+	CreateTime time.Time  `json:"ctime" gorm:"column:ctime"`
+	UpdateTime time.Time  `json:"mtime" gorm:"column:utime"`
+	DeleteTime *time.Time `json:"dtime" gorm:"column:dtime"`
 }
 
 func (u *User) BeforeCreate(scope *_gorm.Scope) error {
