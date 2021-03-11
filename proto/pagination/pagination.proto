@@ -4,7 +4,7 @@ package api;
 
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/duolacloud/microbase/proto/paginator;paginator";
+option go_package = "github.com/duolacloud/microbase/proto/pagination;pagination";
 
 enum OrderDirection {
   ASC = 0;
