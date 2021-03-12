@@ -11,12 +11,10 @@ const (
 )
 
 func FromContext(ctx context.Context) (string, bool) {
-	/*
-		tenantId, ok := ctx.Value(TenantId).(string)
-		if ok {
-			return tenantId, true
-		}
-	*/
+	tenantId, ok := ctx.Value(TenantId).(string)
+	if ok {
+		return tenantId, true
+	}
 
 	md, ok := metadata.FromContext(ctx)
 	if ok {

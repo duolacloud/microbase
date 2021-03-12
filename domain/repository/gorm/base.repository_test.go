@@ -96,6 +96,9 @@ func TestCrud(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "tenant-id", "tenantId1")
+
 	userRepo := NewBaseRepository(repository.NewMultitenancyProvider(tenancy))
 
 	user1 := &User{
@@ -109,14 +112,14 @@ func TestCrud(t *testing.T) {
 	}
 
 	{
-		err := userRepo.Create(context.Background(), user1)
+		err := userRepo.Create(ctx, user1)
 		if assert.Error(err) {
 			t.Fatal(err)
 		}
 
 		time.Sleep(time.Second * 3)
 
-		err = userRepo.Create(context.Background(), user2)
+		err = userRepo.Create(ctx, user2)
 		if assert.Error(err) {
 			t.Fatal(err)
 		}
@@ -129,7 +132,7 @@ func TestCrud(t *testing.T) {
 		Age:  38,
 	}
 	{
-		change, err := userRepo.Upsert(context.Background(), user3)
+		change, err := userRepo.Upsert(ctx, user3)
 		assert.Error(err)
 		t.Logf("change: %v", change)
 	}
@@ -139,7 +142,7 @@ func TestCrud(t *testing.T) {
 			ID:   user1.ID,
 			Name: "赵云",
 		}
-		err := userRepo.Update(context.Background(), user4, user4)
+		err := userRepo.Update(ctx, user4, user4)
 		if assert.Error(err) {
 			t.Fatal(err)
 		}
@@ -149,13 +152,13 @@ func TestCrud(t *testing.T) {
 			"age":  0,
 		}
 
-		err = userRepo.Update(context.Background(), &User{}, data)
+		err = userRepo.Update(ctx, &User{}, data)
 		if assert.NoError(err) {
 			t.Fatal(err)
 		}
 
 		// 如果这么更新， age将不会被设置, &User{ Name: "sunwukong", Age: 0}
-		err = userRepo.Update(context.Background(), user2, data)
+		err = userRepo.Update(ctx, user2, data)
 		if assert.Error(err) {
 			t.Fatal(err)
 		}
@@ -164,7 +167,7 @@ func TestCrud(t *testing.T) {
 
 	{
 		findUser := &User{ID: user1.ID}
-		err := userRepo.Get(context.Background(), findUser)
+		err := userRepo.Get(ctx, findUser)
 		if assert.Error(err) {
 			t.Fatal(err)
 		}
@@ -184,7 +187,7 @@ func TestCrud(t *testing.T) {
 		}
 
 		items := make([]*User, 0)
-		total, pageCount, err := userRepo.Page(context.Background(), &User{}, pageQuery, &items)
+		total, pageCount, err := userRepo.Page(ctx, &User{}, pageQuery, &items)
 		if assert.Error(err) {
 			t.Fatal(err)
 		}
@@ -209,12 +212,12 @@ func TestCrud(t *testing.T) {
 	testCursorList(t, userRepo)
 
 	{
-		err := userRepo.Delete(context.Background(), &User{ID: user1.ID})
+		err := userRepo.Delete(ctx, &User{ID: user1.ID})
 		assert.NoError(err)
 		logger.Info("删除记录成功")
 
 		items := make([]*User, 0)
-		total, pageCount, err := userRepo.Page(context.Background(), &User{}, &entity.PageQuery{
+		total, pageCount, err := userRepo.Page(ctx, &User{}, &entity.PageQuery{
 			Filter:   map[string]interface{}{},
 			PageSize: 10,
 			PageNo:   1,
@@ -226,12 +229,12 @@ func TestCrud(t *testing.T) {
 		assert.Equal(1, total)
 		assert.Equal(1, len(items))
 
-		err = userRepo.Delete(context.Background(), &User{ID: user2.ID})
-		err = userRepo.Delete(context.Background(), &User{ID: user3.ID})
+		err = userRepo.Delete(ctx, &User{ID: user2.ID})
+		err = userRepo.Delete(ctx, &User{ID: user3.ID})
 		logger.Info("删除记录成功")
 
 		items = make([]*User, 0)
-		total, pageCount, err = userRepo.Page(context.Background(), &User{}, &entity.PageQuery{
+		total, pageCount, err = userRepo.Page(ctx, &User{}, &entity.PageQuery{
 			Filter:   map[string]interface{}{},
 			PageSize: 10,
 			PageNo:   1,

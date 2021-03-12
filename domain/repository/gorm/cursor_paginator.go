@@ -17,22 +17,32 @@ import (
 )
 
 type cursorPaginator struct {
-	db          *_gorm.DB
+	dbProvider  repository.DBProvider
 	entity      entity.Entity
 	modelStruct *_gorm.ModelStruct
 }
 
-func NewCursorPaginator(db *_gorm.DB, entity entity.Entity) repository.CursorPaginator {
-	modelStruct := db.NewScope(entity).GetModelStruct()
-
+func NewCursorPaginator(dbProvider repository.DBProvider, entity entity.Entity) repository.CursorPaginator {
 	return &cursorPaginator{
-		db,
-		entity,
-		modelStruct,
+		dbProvider: dbProvider,
+		entity:     entity,
 	}
 }
 
 func (p *cursorPaginator) Paginate(c context.Context, query *entity.CursorQuery, resultPtr interface{}) (extra *entity.CursorExtra, err error) {
+	_db, err := p.dbProvider.ProvideDB(c)
+	if err != nil {
+		return nil, err
+	}
+	db := _db.(*_gorm.DB)
+
+	scope := db.NewScope(p.entity)
+	table := p.dbProvider.ProvideTable(c, scope.TableName())
+
+	if p.modelStruct == nil {
+		p.modelStruct = db.NewScope(p.entity).GetModelStruct()
+	}
+
 	if len(p.modelStruct.PrimaryFields) == 0 {
 		err = errors.New("no primary key found for entity")
 		return
@@ -52,7 +62,7 @@ func (p *cursorPaginator) Paginate(c context.Context, query *entity.CursorQuery,
 
 	extra = &entity.CursorExtra{}
 
-	dbHandler := p.db.Model(p.entity)
+	dbHandler := db.Table(table)
 	dbHandler, err = applyFilter(dbHandler, p.modelStruct, query.Filter)
 	if err != nil {
 		return nil, err

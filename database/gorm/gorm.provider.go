@@ -19,6 +19,8 @@ func NewGormTenancy(config config.Config, entityMap database.EntityMap) (multite
 	driver := config.Get("db", "driver").String("")
 	connectionString := config.Get("db", "connection_string").String("")
 
+	isolation := config.Get("multitenancy", "isolation").String("schema")
+
 	if len(driver) == 0 {
 		return nil, errors.New("driver is empty")
 	}
@@ -39,25 +41,52 @@ func NewGormTenancy(config config.Config, entityMap database.EntityMap) (multite
 
 	dbName := "" // 从连接中获取
 
-	var clientCreateFn = func(ctx context.Context, tenantName string) (multitenancy.Resource, error) {
-		dsn := strings.Replace(connectionString, dbName, DBName(dbName, tenantName), 1)
+	var clientCreateFn func(ctx context.Context, tenantId string) (multitenancy.Resource, error)
+	var clientCloseFunc func(resource multitenancy.Resource)
+	switch isolation {
+	case "schema":
+		clientCreateFn = func(ctx context.Context, tenantId string) (multitenancy.Resource, error) {
+			db, err := gorm.Open(driver, connectionString)
+			if err != nil {
+				return nil, err
+			}
 
-		db, err := gorm.Open(driver, dsn)
-		if err != nil {
-			return nil, err
+			db.LogMode(true)
+			db.DB().SetMaxIdleConns(10)
+			db.DB().SetConnMaxLifetime(3 * time.Minute)
+
+			addAutoCallbacks(db)
+
+			opentracing.AddGormCallbacks(db)
+
+			autoMigrate(tenantId, entityMap, db)
+			return db, nil
 		}
 
-		// defer db.Close()
-		db.LogMode(true)
-		db.DB().SetMaxIdleConns(10)
-		db.DB().SetConnMaxLifetime(3 * time.Minute)
+		clientCloseFunc = func(resource multitenancy.Resource) {}
+	case "database":
+		clientCreateFn = func(ctx context.Context, tenantId string) (multitenancy.Resource, error) {
+			dsn := strings.Replace(connectionString, dbName, DBName(dbName, tenantId), 1)
 
-		addAutoCallbacks(db)
+			db, err := gorm.Open(driver, dsn)
+			if err != nil {
+				return nil, err
+			}
 
-		opentracing.AddGormCallbacks(db)
+			// defer db.Close()
+			db.LogMode(true)
+			db.DB().SetMaxIdleConns(10)
+			db.DB().SetConnMaxLifetime(3 * time.Minute)
 
-		autoMigrate(entityMap, db)
-		return db, nil
+			addAutoCallbacks(db)
+
+			opentracing.AddGormCallbacks(db)
+
+			autoMigrate(tenantId, entityMap, db)
+			return db, nil
+		}
+
+		clientCloseFunc = func(resource multitenancy.Resource) {}
 	}
 
 	tenancy := multitenancy.NewCachedTenancy(clientCreateFn, clientCloseFunc)
@@ -65,16 +94,12 @@ func NewGormTenancy(config config.Config, entityMap database.EntityMap) (multite
 	return tenancy, nil
 }
 
-var clientCloseFunc = func(resource multitenancy.Resource) {
-
-}
-
 // DBName returns the prefixed database name in order to avoid collision with MySQL internal databases.
-func DBName(prefix string, tenantName string) string {
-	if len(tenantName) == 0 {
+func DBName(prefix string, tenantId string) string {
+	if len(tenantId) == 0 {
 		return prefix
 	}
-	return fmt.Sprintf("%s_%s", prefix, tenantName)
+	return fmt.Sprintf("%s_%s", prefix, tenantId)
 }
 
 // FromDBName returns the source name of the tenant.
@@ -99,14 +124,25 @@ func addAutoCallbacks(db *gorm.DB) {
 	db.Callback().Delete().Replace("gorm:delete", deleteCallback)
 }
 
-func autoMigrate(entityMap database.EntityMap, db *gorm.DB) error {
+func TableName(tableName string, tenantId string) string {
+	if len(tenantId) == 0 {
+		return tableName
+	}
+
+	return fmt.Sprintf("%s_%s", tableName, tenantId)
+}
+
+func autoMigrate(tenantId string, entityMap database.EntityMap, db *gorm.DB) error {
 	// ctx, span := trace.StartSpan(ctx, "tenancy.Migrate")
 	// defer span.End()
 	entities := entityMap.GetEntities()
-	if db = db.AutoMigrate(entities...); db.Error != nil {
-		// TODO m.logger.For(ctx).Error("tenancy migrate", zap.Error(err))
-		// span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
-		return fmt.Errorf("running tenancy migration: %w", db.Error)
+
+	db = db.Unscoped()
+	for _, entity := range entities {
+		scope := db.NewScope(entity)
+		tableName := TableName(scope.TableName(), tenantId)
+		db = db.Table(tableName).AutoMigrate(entity)
 	}
+
 	return nil
 }
