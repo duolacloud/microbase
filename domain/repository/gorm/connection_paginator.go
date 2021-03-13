@@ -19,14 +19,14 @@ import (
 )
 
 type connectionPaginator struct {
-	dbProvider repository.DBProvider
-	entity     entity.Entity
+	dataSourceProvider repository.DataSourceProvider
+	entity             entity.Entity
 }
 
-func NewConnectionPaginator(dbProvider repository.DBProvider, entity entity.Entity) repository.ConnectionPaginator {
+func NewConnectionPaginator(dataSourceProvider repository.DataSourceProvider, entity entity.Entity) repository.ConnectionPaginator {
 	return &connectionPaginator{
-		dbProvider: dbProvider,
-		entity:     entity,
+		dataSourceProvider: dataSourceProvider,
+		entity:             entity,
 	}
 }
 
@@ -43,7 +43,7 @@ func validateFirstLast(first, last *int) error {
 }
 
 func (p *connectionPaginator) Paginate(c context.Context, query *entity.ConnectionQuery) (conn *entity.Connection, err error) {
-	_db, err := p.dbProvider.ProvideDB(c)
+	_db, err := p.dataSourceProvider.ProvideDB(c)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (p *connectionPaginator) Paginate(c context.Context, query *entity.Connecti
 	scope := db.NewScope(p.entity)
 	modelStruct := scope.GetModelStruct()
 
-	table := p.dbProvider.ProvideTable(c, scope.TableName())
+	table := p.dataSourceProvider.ProvideTable(c, scope.TableName())
 
 	if len(modelStruct.PrimaryFields) == 0 {
 		err = errors.New("no primary key found for model")

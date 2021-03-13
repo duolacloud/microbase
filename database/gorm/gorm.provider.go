@@ -29,35 +29,25 @@ func NewGormTenancy(config config.Config, entityMap database.EntityMap) (multite
 		return nil, errors.New("connection_string is empty")
 	}
 
-	masterDB, err := gorm.Open(driver, connectionString)
+	defaultDB, err := gorm.Open(driver, connectionString)
 	if err != nil {
 		return nil, err
 	}
-	defer masterDB.Close()
+	// defer defaultDB.Close()
 
-	masterDB.LogMode(true)
-	masterDB.DB().SetMaxIdleConns(1)
-	masterDB.DB().SetConnMaxLifetime(3 * time.Minute)
+	defaultDB.LogMode(true)
+	defaultDB.DB().SetMaxIdleConns(1)
+	defaultDB.DB().SetConnMaxLifetime(3 * time.Minute)
 
-	dbName := "" // 从连接中获取
+	addAutoCallbacks(defaultDB)
+	opentracing.AddGormCallbacks(defaultDB)
 
 	var clientCreateFn func(ctx context.Context, tenantId string) (multitenancy.Resource, error)
 	var clientCloseFunc func(resource multitenancy.Resource)
 	switch isolation {
 	case "schema":
 		clientCreateFn = func(ctx context.Context, tenantId string) (multitenancy.Resource, error) {
-			db, err := gorm.Open(driver, connectionString)
-			if err != nil {
-				return nil, err
-			}
-
-			db.LogMode(true)
-			db.DB().SetMaxIdleConns(10)
-			db.DB().SetConnMaxLifetime(3 * time.Minute)
-
-			addAutoCallbacks(db)
-
-			opentracing.AddGormCallbacks(db)
+			db := defaultDB // gorm.Open(driver, connectionString)
 
 			autoMigrate(tenantId, entityMap, db)
 			return db, nil
@@ -65,6 +55,8 @@ func NewGormTenancy(config config.Config, entityMap database.EntityMap) (multite
 
 		clientCloseFunc = func(resource multitenancy.Resource) {}
 	case "database":
+		dbName := "" // 从连接中获取
+
 		clientCreateFn = func(ctx context.Context, tenantId string) (multitenancy.Resource, error) {
 			dsn := strings.Replace(connectionString, dbName, DBName(dbName, tenantId), 1)
 

@@ -7,7 +7,7 @@ import (
 	"github.com/duolacloud/microbase/multitenancy"
 )
 
-type DBProvider interface {
+type DataSourceProvider interface {
 	ProvideDB(ctx context.Context) (interface{}, error)
 	ProvideTable(ctx context.Context, tableName string) string
 }

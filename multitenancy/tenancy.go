@@ -40,9 +40,6 @@ func NewCachedTenancy(
 func (c *cachedTenancy) ResourceFor(ctx context.Context, tenantName string) (Resource, error) {
 	c.mu.RLock()
 	resource, ok := c.resources[tenantName]
-	if ok {
-		return resource, nil
-	}
 	c.mu.RUnlock()
 
 	if ok {

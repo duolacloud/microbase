@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/micro/go-micro/v2/config"
-	"github.com/micro/go-micro/v2/config/source/memory"
-	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/duolacloud/microbase/database/gorm"
 	opentracing2 "github.com/duolacloud/microbase/database/gorm/opentracing"
 	"github.com/duolacloud/microbase/opentracing/jaeger"
+	"github.com/micro/go-micro/v2/config"
+	"github.com/micro/go-micro/v2/config/source/memory"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 type User struct {
