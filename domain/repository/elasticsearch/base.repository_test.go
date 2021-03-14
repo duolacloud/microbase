@@ -261,8 +261,8 @@ func testCursorList(t *testing.T, repo repository.BaseRepository) {
 	for i := 0; i < 100; i++ {
 		user := &User{
 			ID:   fmt.Sprintf("%d", i),
-			Name: "关羽",
-			Age:  38,
+			Name: fmt.Sprintf("关羽%d", i),
+			Age:  i + 10,
 		}
 
 		_, err := repo.Upsert(context.Background(), user)
@@ -277,16 +277,21 @@ func testCursorList(t *testing.T, repo repository.BaseRepository) {
 			NeedTotal: true,
 			Cursor:    cursor,
 			Fields:    []string{"name", "age"},
-			Direction: entity.CursorDirectionBefore,
-			Filter:    map[string]interface{}{},
-			Orders: []*entity.Order{
-				{
-					Field: "name",
-				},
-				{
-					Field: "ctime",
+			Direction: entity.CursorDirectionAfter,
+			Filter: map[string]interface{}{
+				// "name": "3",
+				"age": map[string]interface{}{
+					"GTE": 15,
 				},
 			},
+			// Orders: []*entity.Order{
+			// {
+			//	Field: "name",
+			// },
+			// {
+			//	Field: "age",
+			//},
+			//},
 			Size: 7,
 		}
 

@@ -64,17 +64,7 @@ func (p *connectionPaginator) Paginate(c context.Context, query *entity.Connecti
 		return
 	}
 
-	if query.Orders == nil {
-		fieldIDs := modelStruct.PrimaryFields
-		query.Orders = make([]*entity.Order, len(fieldIDs))
-		for i, fieldID := range fieldIDs {
-			order := &entity.Order{
-				Field:     fieldID.DBName,
-				Direction: entity.OrderDirectionAsc,
-			}
-			query.Orders[i] = order
-		}
-	}
+	p.ensureOrders(modelStruct, query)
 
 	dbHandler := db.Table(table)
 	dbHandler, err = applyFilter(dbHandler, modelStruct, query.Filter)
@@ -305,10 +295,39 @@ func (p *connectionPaginator) applyCursor(queryHandler *_gorm.DB, query *entity.
 	return queryHandler, nil
 }
 
+func (p *connectionPaginator) ensureOrders(modelStruct *_gorm.ModelStruct, query *entity.ConnectionQuery) {
+	fieldIDs := modelStruct.PrimaryFields
+
+	// 排序一定要包含ID, 否则会遍历不完整
+	matchCount := 0
+	for _, fieldID := range fieldIDs {
+		for _, order := range query.Orders {
+			if order.Field == fieldID.DBName {
+				matchCount += 1
+			}
+		}
+	}
+
+	if matchCount != len(fieldIDs) {
+		if query.Orders == nil {
+			query.Orders = make([]*entity.Order, len(fieldIDs))
+		}
+
+		for i, fieldID := range fieldIDs {
+			order := &entity.Order{
+				Field:     fieldID.DBName,
+				Direction: entity.OrderDirectionAsc,
+			}
+			query.Orders[i] = order
+		}
+	}
+}
+
 func (p *connectionPaginator) applyOrders(queryHandler *_gorm.DB, orders []*entity.Order, reverse bool, modelStruct *_gorm.ModelStruct) (*_gorm.DB, error) {
 	for _, order := range orders {
 		if reverse {
-			order.Direction = order.Direction.Reverse()
+			// 默认用第一个的方向
+			order.Direction = orders[0].Direction.Reverse()
 		}
 
 		fieldOrder, ok := FindField(order.Field, modelStruct, queryHandler)

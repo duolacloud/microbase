@@ -39,7 +39,7 @@ func (r *DocumentRepository) Create(c context.Context, doc *entity.Document) err
 		Index(index).
 		Type(doc.Type).
 		Id(doc.ID).
-		Upsert(doc.Data).
+		Upsert(doc.Fields).
 		Do(c)
 	return err
 }
@@ -56,7 +56,7 @@ func (r *DocumentRepository) Upsert(c context.Context, doc *entity.Document) err
 		Type(doc.Type).
 		Id(doc.ID).
 		DocAsUpsert(true).
-		Doc(doc.Data).
+		Doc(doc.Fields).
 		Do(c)
 
 	return err
@@ -73,7 +73,7 @@ func (r *DocumentRepository) Update(c context.Context, doc *entity.Document) err
 		Index(index).
 		Type(doc.Type).
 		Id(doc.ID).
-		Doc(doc.Data).
+		Doc(doc.Fields).
 		Do(c)
 	return err
 }
@@ -103,7 +103,7 @@ func (r *DocumentRepository) Get(c context.Context, id string, index, typ string
 		Index: index,
 		Type:  typ,
 	}
-	err = json.Unmarshal(*res.Source, doc.Data)
+	err = json.Unmarshal(*res.Source, doc.Fields)
 	if err != nil {
 		return nil, err
 	}

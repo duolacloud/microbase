@@ -49,10 +49,10 @@ func (r *BaseRepository) Create(c context.Context, ent entity.Entity) error {
 		return errors.New(fmt.Sprintf("no id field for entity %v", ent))
 	}
 
-	var data map[string]interface{}
+	var fields map[string]interface{}
 
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Result:  &data,
+		Result:  &fields,
 		TagName: "json",
 	})
 	if err != nil {
@@ -65,10 +65,10 @@ func (r *BaseRepository) Create(c context.Context, ent entity.Entity) error {
 	}
 
 	return r.DocumentRepository.Create(c, &entity.Document{
-		ID:    id,
-		Index: index,
-		Type:  typ,
-		Data:  data,
+		ID:     id,
+		Index:  index,
+		Type:   typ,
+		Fields: fields,
 	})
 }
 
@@ -86,10 +86,10 @@ func (r *BaseRepository) Upsert(c context.Context, ent entity.Entity) (*reposito
 		return nil, errors.New(fmt.Sprintf("no id field for entity %v", ent))
 	}
 
-	var data map[string]interface{}
+	var fields map[string]interface{}
 
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Result:  &data,
+		Result:  &fields,
 		TagName: "json",
 	})
 	if err != nil {
@@ -102,10 +102,10 @@ func (r *BaseRepository) Upsert(c context.Context, ent entity.Entity) (*reposito
 	}
 
 	err = r.DocumentRepository.Upsert(c, &entity.Document{
-		ID:    id,
-		Index: index,
-		Type:  typ,
-		Data:  data,
+		ID:     id,
+		Index:  index,
+		Type:   typ,
+		Fields: fields,
 	})
 	if err != nil {
 		return nil, err
@@ -130,17 +130,17 @@ func (r *BaseRepository) Update(c context.Context, ent entity.Entity, data inter
 		return errors.New(fmt.Sprintf("no id field for entity %v", ent))
 	}
 
-	var d map[string]interface{}
-	err = mapstructure.Decode(data, d)
+	var fields map[string]interface{}
+	err = mapstructure.Decode(data, fields)
 	if err != nil {
 		return err
 	}
 
 	return r.DocumentRepository.Update(c, &entity.Document{
-		ID:    id,
-		Index: index,
-		Type:  typ,
-		Data:  d,
+		ID:     id,
+		Index:  index,
+		Type:   typ,
+		Fields: fields,
 	})
 }
 
@@ -167,7 +167,7 @@ func (r *BaseRepository) Get(c context.Context, ent entity.Entity) error {
 		return nil
 	}
 
-	err = mapstructure.Decode(doc.Data, ent)
+	err = mapstructure.Decode(doc.Fields, ent)
 	if err != nil {
 		return err
 	}
@@ -244,7 +244,7 @@ func (r *BaseRepository) List(c context.Context, query *entity.CursorQuery, ent 
 			return nil, err
 		}
 
-		err = decoder.Decode(doc.Data)
+		err = decoder.Decode(doc.Fields)
 		if err != nil {
 			return nil, err
 		}

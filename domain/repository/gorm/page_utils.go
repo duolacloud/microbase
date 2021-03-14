@@ -1,16 +1,7 @@
 package gorm
 
-import(
-	"errors"
+import (
 	_gorm "github.com/jinzhu/gorm"
-)
-
-// ErrFilter
-var (
-	ErrFilter          		= errors.New("过滤参数错误")
-	ErrFilterValueType 		= errors.New("过滤值类型错误")
-	ErrFilterValueSize 		= errors.New("过滤值大小错误")
-	ErrFilterOperate   		= errors.New("过滤操作错误")
 )
 
 func pageQuery(queryHandler *_gorm.DB, pageNo int, pageSize int, resultPtr interface{}) (count int, pageCount int, err error) {
@@ -24,7 +15,7 @@ func pageQuery(queryHandler *_gorm.DB, pageNo int, pageSize int, resultPtr inter
 	}
 
 	pageCount = count / pageSize
-	if count % pageSize != 0 {
+	if count%pageSize != 0 {
 		pageCount++
 	}
 

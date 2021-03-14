@@ -60,6 +60,8 @@ func (p *cursorPaginator) Paginate(c context.Context, query *entity.CursorQuery,
 		}
 	}
 
+	p.ensureOrders(p.modelStruct, query)
+
 	extra = &entity.CursorExtra{}
 
 	dbHandler := db.Table(table)
@@ -148,6 +150,34 @@ func (p *cursorPaginator) Paginate(c context.Context, query *entity.CursorQuery,
 	return
 }
 
+func (p *cursorPaginator) ensureOrders(modelStruct *_gorm.ModelStruct, query *entity.CursorQuery) {
+	fieldIDs := modelStruct.PrimaryFields
+
+	// 排序一定要包含ID, 否则会遍历不完整
+	matchCount := 0
+	for _, fieldID := range fieldIDs {
+		for _, order := range query.Orders {
+			if order.Field == fieldID.DBName {
+				matchCount += 1
+			}
+		}
+	}
+
+	if matchCount != len(fieldIDs) {
+		if query.Orders == nil {
+			query.Orders = make([]*entity.Order, len(fieldIDs))
+		}
+
+		for i, fieldID := range fieldIDs {
+			order := &entity.Order{
+				Field:     fieldID.DBName,
+				Direction: entity.OrderDirectionAsc,
+			}
+			query.Orders[i] = order
+		}
+	}
+}
+
 func (p *cursorPaginator) applyCursor(queryHandler *_gorm.DB, query *entity.CursorQuery) (*_gorm.DB, error) {
 	if len(query.Cursor) > 0 {
 		cursor := &entity.Cursor{}
@@ -211,7 +241,7 @@ func (p *cursorPaginator) applyCursor(queryHandler *_gorm.DB, query *entity.Curs
 func (p *cursorPaginator) applyOrders(queryHandler *_gorm.DB, orders []*entity.Order, reverse bool) (*_gorm.DB, error) {
 	for _, order := range orders {
 		if reverse {
-			order.Direction = order.Direction.Reverse()
+			order.Direction = orders[0].Direction.Reverse()
 		}
 
 		fieldOrder, ok := p.findField(order.Field, queryHandler)
