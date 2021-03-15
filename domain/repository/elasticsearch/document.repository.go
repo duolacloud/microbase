@@ -103,7 +103,7 @@ func (r *DocumentRepository) Get(c context.Context, id string, index, typ string
 		Index: index,
 		Type:  typ,
 	}
-	err = json.Unmarshal(*res.Source, doc.Fields)
+	err = json.Unmarshal(*res.Source, &doc.Fields)
 	if err != nil {
 		return nil, err
 	}

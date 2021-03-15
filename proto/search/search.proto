@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+// import "google/protobuf/timestamp.proto";
+// import public "google/protobuf/empty.proto";
+// import "google/api/annotations.proto";
+import "github.com/duolacloud/microbase/proto/pagination/pagination.proto";
+
+package search;
+
+option go_package = "duolacloud.com/duolacloud/microbase/proto/search;search";
+
+service SearchService {
+  rpc Upsert(UpsertDocumentRequest) returns (UpsertDocumentResponse) {}
+  rpc BatchUpsert(BatchUpsertDocumentRequest) returns (BatchUpsertDocumentResponse) {}
+  rpc Get(GetDocumentRequest) returns (Document) {}
+  rpc BatchGet(BatchGetDocumentRequest) returns (BatchGetDocumentResponse) {
+    // option (google.api.http) = {
+    //  get: "/v1/metafields:batchGet"
+    //};
+  }
+
+  rpc Search(SearchRequest) returns (SearchResponse) {}
+  // 列表查询模式查询结果
+  rpc Connection(pagination.ConnectionQuery) returns (pagination.Connection) {}
+}
+
+service IndexService {
+  rpc Create(CreateIndexRequest) returns (CreateIndexResponse) {}
+  rpc Delete(DeleteIndexRequest) returns (DeleteIndexResponse) {}
+}
+
+message Index {
+  IndexSetting indexSetting = 1;
+  repeated FieldConfig fields = 2;
+}
+
+message IndexSetting {
+  
+}
+
+message FieldConfig {
+  string name = 1;
+  string type = 2;
+  string analyzer = 3;
+}
+
+message CreateIndexRequest {
+  Index index = 1;
+}
+
+message CreateIndexResponse {
+  bool ack = 1;
+}
+
+message DeleteIndexRequest {
+  string index = 1;
+}
+
+message DeleteIndexResponse {
+  bool ack = 1;
+}
+
+message Document {
+  string id = 1;
+  string index = 2;
+  string type = 3;
+  map<string, string> fields = 4;
+}
+
+message UpsertDocumentRequest {
+  Document document = 1;
+}
+
+message UpsertDocumentResponse {
+  bool ack = 1; 
+}
+
+message BatchUpsertDocumentRequest {
+  repeated Document document = 1;
+}
+
+message BatchUpsertDocumentResponse {
+  repeated UpsertDocumentRequest items = 1;
+}
+
+message GetDocumentRequest {
+  string id = 1;
+}
+
+message BatchGetDocumentRequest {
+  repeated string ids = 1;
+}
+
+message BatchGetDocumentResponse {
+  repeated Document documents = 1;
+}
+
+message SearchRequest {
+  string keyword = 1;
+  int32 current_page = 2;
+  int32 page_size = 3;
+}
+
+message SearchResponse {
+  repeated Document documents = 1;
+  int64 total = 2;
+}
+
+message DeleteDocumentRequest {
+  string id = 1;
+}
+
+message DeleteDocumentResponse {
+  bool ack = 1;
+}

@@ -20,12 +20,12 @@ import (
 )
 
 type User struct {
-	ID         string     `json:"id"`
+	ID         string     `json:"id" elastic:"analyzer:keyword;type:string"`
 	Name       string     `json:"name"`
-	Age        int        `json:"age"`
-	CreateTime time.Time  `json:"ctime"`
-	UpdateTime time.Time  `json:"mtime"`
-	DeleteTime *time.Time `json:"dtime"`
+	Age        int        `json:"age" elastic:"type:integer"`
+	CreateTime time.Time  `json:"ctime" elastic:"type:date"`
+	UpdateTime time.Time  `json:"mtime" elastic:"type:date"`
+	DeleteTime *time.Time `json:"dtime" elastic:"type:date"`
 	Deleted    bool       `json:"deleted"`
 }
 
