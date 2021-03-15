@@ -19,7 +19,7 @@ message Order {
 message PageInfo {
   int64 total = 1;
   bool hasNext = 2;
-  bool hasPrevious =3;
+  bool hasPrevious = 3;
   string startCursor = 4;
   string endCursor = 5;
 }
@@ -48,4 +48,29 @@ message Connection {
 message Edge {
   google.protobuf.Any node = 1;
   string cursor = 2;
+}
+
+
+enum CursorDirection {
+  before = 0;
+  after = 1;
+}
+
+message PageQuery {
+  int64 page_no = 1;
+  int32 page_size = 2;
+  string filter = 3;
+  repeated Order orders = 4;
+  repeated string fields = 5;
+}
+
+// 游标查询
+message ListQuery {
+  CursorDirection direction = 1;
+  string filter = 2;
+  int32 size = 3;
+  string cursor = 4;
+  bool needTotal = 5;
+  repeated Order orders = 6;
+  repeated string fields = 7;
 }

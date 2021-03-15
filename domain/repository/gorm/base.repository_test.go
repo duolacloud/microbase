@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/duolacloud/microbase/database/gorm"
+	"github.com/duolacloud/microbase/datasource/gorm"
 	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/domain/repository"
 	"github.com/duolacloud/microbase/multitenancy"

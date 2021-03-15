@@ -16,7 +16,7 @@ type MultitenancyProvider struct {
 	tenancy multitenancy.Tenancy
 }
 
-func NewMultitenancyProvider(tenancy multitenancy.Tenancy) *MultitenancyProvider {
+func NewMultitenancyProvider(tenancy multitenancy.Tenancy) DataSourceProvider {
 	return &MultitenancyProvider{
 		tenancy,
 	}

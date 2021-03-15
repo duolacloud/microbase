@@ -5,6 +5,7 @@ go 1.14
 require (
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
 	entgo.io/ent v0.6.0
+	github.com/coreos/etcd v3.3.18+incompatible
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-git/go-git/v5 v5.1.0 // indirect
 	github.com/go-sql-driver/mysql v1.5.1-0.20200311113236-681ffa848bae
@@ -52,6 +53,4 @@ require (
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 )
 
-replace (
-	google.golang.org/grpc => google.golang.org/grpc v1.26.0
-)
+replace google.golang.org/grpc => google.golang.org/grpc v1.26.0

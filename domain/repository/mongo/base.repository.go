@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/duolacloud/microbase/database/mongo"
+	"github.com/duolacloud/microbase/datasource/mongo"
 	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/domain/repository"
 	reflect2 "github.com/duolacloud/microbase/domain/repository/mongo/reflect"

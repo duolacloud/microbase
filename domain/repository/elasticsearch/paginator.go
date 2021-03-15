@@ -3,20 +3,21 @@ package elasticsearch
 import (
 	"context"
 
+	"github.com/duolacloud/microbase/client/search"
 	"github.com/duolacloud/microbase/domain/entity"
-	"github.com/duolacloud/microbase/domain/repository"
+	"github.com/olivere/elastic/v6"
 )
 
 type Paginator struct {
-	dataSourceProvider repository.DataSourceProvider
+	client *elastic.Client
 }
 
-func NewPaginator(dataSourceProvider repository.DataSourceProvider) *Paginator {
+func NewPaginator(client *elastic.Client) *Paginator {
 	return &Paginator{
-		dataSourceProvider,
+		client,
 	}
 }
 
-func (p *Paginator) Paginate(c context.Context, query *entity.PageQuery, index, typ string) (docs []*entity.Document, total int, pageCount int, err error) {
+func (p *Paginator) Paginate(c context.Context, query *entity.PageQuery, index, typ string) (docs []*search.Document, total int64, err error) {
 	return
 }

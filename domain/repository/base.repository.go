@@ -25,7 +25,7 @@ type BaseRepository interface {
 	// 翻页查询
 	// query: 查询条件
 	// m: 数据指针，仅用于帮助推导数据类型
-	Page(c context.Context, m entity.Entity, query *entity.PageQuery, resultPtr interface{}) (total int, pageCount int, err error)
+	Page(c context.Context, m entity.Entity, query *entity.PageQuery, resultPtr interface{}) (total int64, err error)
 
 	// 根据主键删除数据
 	// m	数据对象

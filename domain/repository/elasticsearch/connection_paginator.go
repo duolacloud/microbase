@@ -4,16 +4,16 @@ import (
 	"context"
 
 	"github.com/duolacloud/microbase/domain/entity"
-	"github.com/duolacloud/microbase/domain/repository"
+	"github.com/olivere/elastic/v6"
 )
 
 type ConnectionPaginator struct {
-	dataSourceProvider repository.DataSourceProvider
+	client *elastic.Client
 }
 
-func NewConnectionPaginator(dataSourceProvider repository.DataSourceProvider) *ConnectionPaginator {
+func NewConnectionPaginator(client *elastic.Client) *ConnectionPaginator {
 	return &ConnectionPaginator{
-		dataSourceProvider,
+		client,
 	}
 }
 

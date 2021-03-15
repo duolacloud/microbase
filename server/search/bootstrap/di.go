@@ -15,6 +15,7 @@ func Setup(c *cli.Context) *fx.App {
 		),
 		framework.FrameworkOpts,
 		HandlerOpts,
-		MultitenancyOpts,
+		RepositoryOpts,
+		DatasourceOpts,
 		framework.MakeMicroServiceOpts(c))
 }

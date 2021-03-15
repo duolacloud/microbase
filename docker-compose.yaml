@@ -1,0 +1,245 @@
+version: "3.5"
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.18
+    environment:
+      COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+    networks:
+      biz:
+        aliases:
+          - jaeger
+    ports:
+      - 5775:5775/udp
+      - 6831:6831/udp
+      - 6832:6832/udp
+      - 5778:5778
+      - 16686:16686
+      - 14268:14268
+      - 14250:14250
+      - 9411:9411
+  consul:
+    image: consul:latest
+    command: agent -dev -client 0.0.0.0 -node-id=9867dd2a-fe0f-4b46-82b5-4fdcabef1f3d
+    ports:
+      - 8500:8500
+    networks:
+      biz:
+        aliases:
+          - consul
+  zookeeper:
+    image: debezium/zookeeper:1.2
+    ports:
+      - "2181:2181"
+    networks:
+      biz:
+        aliases:
+          - zookeeper
+
+  mysql:
+    image: debezium/example-mysql:1.2
+    volumes:
+      - ~/opt/mysql:/var/lib/mysql
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=debezium
+      - MYSQL_USER=mysqluser
+      - MYSQL_PASSWORD=mysqlpw
+      - TZ=Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --explicit_defaults_for_timestamp=true
+    networks:
+      biz:
+        aliases:
+          - mysql
+  hbase:
+    image: harisekhon/hbase:1.3
+    ports:
+      - 8080:8080
+      - 8085:8085
+      - 9090:9090
+      - 9095:9095
+      - 16000:16000
+      - 16010:16010
+      - 16020:16020
+      - 16201:16201
+      - 16301:16301
+    volumes:
+      - ~/opt/hbase-data:/hbase-data
+    networks:
+      biz:
+        aliases:
+          - hbase
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.8.8
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - TZ=Asia/Shanghai
+      - cluster.name=docker-cluster
+      - transport.host=0.0.0.0
+      - xpack.security.enabled=false
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+      - "discovery.zen.ping.unicast.hosts=elastic"
+      - "logger.level=DEBUG"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ~/opt/elastic:/usr/share/elasticsearch/data/
+    networks:
+      biz:
+        aliases:
+          - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.6.0
+    ports:
+      - "5601:5601"
+
+  kafka:
+    image: debezium/kafka:1.2
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      - ZOOKEEPER_CONNECT=zookeeper:2181
+    networks:
+      biz:
+        aliases:
+          - kafka
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    environment:
+      TZ: Asia/Shanghai
+    networks:
+      biz:
+        aliases:
+          - redis
+  rmqnamesrv:
+    image: rocketmqinc/rocketmq:4.4.0
+    container_name: rmqnamesrv
+    ports:
+      - 9876:9876
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - ~/opt/rocketmq/logs:/home/rocketmq/logs
+      - ~/opt/rocketmq/store:/home/rocketmq/store
+      # - /etc/localtime:/etc/localtime:ro # 修改容器内的时区和宿主机一样
+    command: sh mqnamesrv
+    networks:
+      biz:
+        aliases:
+          - rmqnamesrv
+  rmqbroker1:
+    image: rocketmqinc/rocketmq:4.4.0
+    container_name: rmqbroker1
+    ports:
+      - 10909:10909
+      - 10911:10911
+      - 10912:10912
+    volumes:
+      - ~/opt/rocketmq/logs:/home/rocketmq/logs
+      - ~/opt/rocketmq/store:/home/rocketmq/store
+      - ${PWD}/config/rocketmq/broker.conf:/opt/rocketmq-4.4.0/conf/broker.conf
+      # - /etc/localtime:/etc/localtime:ro # 修改容器内的时区和宿主机一样
+    command: sh mqbroker -n rmqnamesrv:9876 -c ../conf/broker.conf
+    depends_on:
+      - rmqnamesrv
+    environment:
+      - TZ=Asia/Shanghai
+      - JAVA_HOME=/usr/lib/jvm/jre
+    networks:
+      biz:
+        aliases:
+          - rmqbroker1
+  rmqconsole:
+    image: styletang/rocketmq-console-ng
+    container_name: rocketmq-console-ng
+    ports:
+      - 8087:8080
+    depends_on:
+      - rmqnamesrv
+    environment:
+      - TZ=Asia/Shanghai
+      - JAVA_OPTS= -Dlogging.level.root=info -Drocketmq.namesrv.addr=rmqnamesrv:9876
+      - Dcom.rocketmq.sendMessageWithVIPChannel=false
+    networks:
+      biz:
+        aliases:
+          - rmqconsole
+
+  search-srv:
+    build:
+      context: ./server/search
+      dockerfile: Dockerfile
+    depends_on:
+      - consul
+      - elasticsearch
+      - jaeger
+    environment:
+      - TZ=Asia/Shanghai
+      - MICRO_SERVICE_NAME=com.microbase.srv.search
+      - APOLLO_NAMESPACE=application
+      - APOLLO_ADDRESS=http://apollo-dev.dev.lucfish.com:8080
+      - APOLLO_APP_ID=microbase-search-srv
+      - APOLLO_CLUSTER=dev
+      - JAEGER_ADDR=jaeger:6831
+      - MICRO_REGISTRY=consul
+      - MICRO_REGISTRY_ADDRESS=consul:8500
+    networks:
+      biz:
+        aliases:
+          - microbase-search-srv
+
+  tc-server:
+    image: tc-server:latest
+    ports:
+      - 8091:8091
+    depends_on:
+      - jaeger
+    environment:
+      - TZ=Asia/Shanghai
+    command:
+      start --apollo_namespace application --apollo_address http://apollo-dev.dev.lucfish.com:8080 --apollo_app_id tc-server --apollo_cluster=dev
+      - JAEGER_ADDR=jaeger:6831
+    networks:
+      biz:
+        aliases:
+          - tc-server
+
+  microbase.micro.api:
+    image: ccr.ccs.tencentyun.com/lf_base/micro:2.9.1
+    depends_on:
+      - consul
+    environment:
+      - TZ=Asia/Shanghai
+      - MICRO_REGISTRY=consul
+      - MICRO_REGISTRY_ADDRESS=consul:8500
+      - JAEGER_ADDR=jaeger:6831
+    command: --server_name com.microbase.srv.api --auth_namespace com.microbase api --namespace com.microbase --address 0.0.0.0:8080 --handler http
+    ports:
+      - 10250:8080
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    networks:
+      biz:
+        aliases:
+          - microbase.micro.api
+networks:
+  biz:
+    name: biz
+    driver: bridge

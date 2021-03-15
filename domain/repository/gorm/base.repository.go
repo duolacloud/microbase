@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/duolacloud/microbase/database/gorm/opentracing"
+	"github.com/duolacloud/microbase/datasource/gorm/opentracing"
 	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/domain/repository"
 	breflect "github.com/duolacloud/microbase/reflect"

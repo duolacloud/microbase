@@ -1,0 +1,1 @@
+{"appId":"microbase-search-srv","cluster":"default","namespaceName":"application","releaseKey":"20210316015811-3e98f0f898802b34","configurations":{"elasticsearch.addrs":"[\"http://localhost:9200\"]"}}

@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 // import "google/protobuf/timestamp.proto";
-// import public "google/protobuf/empty.proto";
+import "google/protobuf/empty.proto";
 // import "google/api/annotations.proto";
 import "github.com/duolacloud/microbase/proto/pagination/pagination.proto";
 
@@ -10,32 +10,70 @@ package search;
 option go_package = "duolacloud.com/duolacloud/microbase/proto/search;search";
 
 service SearchService {
-  rpc Upsert(UpsertDocumentRequest) returns (UpsertDocumentResponse) {}
+  rpc Create(Document) returns (google.protobuf.Empty) {}
+  rpc Upsert(Document) returns (google.protobuf.Empty) {}
+  rpc Update(Document) returns (google.protobuf.Empty) {}
   rpc BatchUpsert(BatchUpsertDocumentRequest) returns (BatchUpsertDocumentResponse) {}
   rpc Get(GetDocumentRequest) returns (Document) {}
-  rpc BatchGet(BatchGetDocumentRequest) returns (BatchGetDocumentResponse) {
-    // option (google.api.http) = {
-    //  get: "/v1/metafields:batchGet"
-    //};
-  }
+  rpc BatchGet(BatchGetDocumentRequest) returns (BatchGetDocumentResponse) {}
+  rpc Delete(DeleteDocumentRequest) returns (google.protobuf.Empty) {}
 
   rpc Search(SearchRequest) returns (SearchResponse) {}
-  // 列表查询模式查询结果
-  rpc Connection(pagination.ConnectionQuery) returns (pagination.Connection) {}
+  rpc List(ListRequest) returns (ListResponse) {}
+  rpc Page(PageRequest) returns (PageResponse) {}
+
+  // graphql 查询模式查询结果
+  rpc Connection(ConnectionRequest) returns (pagination.Connection) {}
+
+
+  rpc CreateIndex(CreateIndexRequest) returns (google.protobuf.Empty) {}
+  rpc DeleteIndex(DeleteIndexRequest) returns (google.protobuf.Empty) {}
+  rpc IndexExists(IndexExistsRequest) returns (IndexExistsResponse) {}
 }
 
-service IndexService {
-  rpc Create(CreateIndexRequest) returns (CreateIndexResponse) {}
-  rpc Delete(DeleteIndexRequest) returns (DeleteIndexResponse) {}
+message IndexExistsRequest{
+  string index = 1;
+}
+
+message IndexExistsResponse {
+  bool exists = 1;
+}
+
+message PageRequest {
+  pagination.PageQuery query = 1;
+  string index = 2;
+  string type = 3;
+}
+
+message PageResponse {
+  int64 total = 1;
+  repeated Document documents = 2;
+}
+
+message ConnectionRequest {
+  pagination.ConnectionQuery query = 1;
+  string index = 2;
+  string type = 3;
+}
+
+message ListRequest {
+  pagination.ListQuery query = 1;
+  string index = 2;
+  string type = 3;
+}
+
+message ListResponse {
+  repeated Document documents = 1;
+  int64 total = 2;
+  bool hasNext = 3;
+  bool hasPrevious = 4;
+  string startCursor = 5;
+  string endCursor = 6;
 }
 
 message Index {
-  IndexSetting indexSetting = 1;
-  repeated FieldConfig fields = 2;
-}
-
-message IndexSetting {
-  
+  string name = 1;
+  string mapping = 2;
 }
 
 message FieldConfig {
@@ -48,31 +86,14 @@ message CreateIndexRequest {
   Index index = 1;
 }
 
-message CreateIndexResponse {
-  bool ack = 1;
-}
-
 message DeleteIndexRequest {
   string index = 1;
 }
 
-message DeleteIndexResponse {
-  bool ack = 1;
-}
-
 message Document {
-  string id = 1;
-  string index = 2;
-  string type = 3;
-  map<string, string> fields = 4;
-}
-
-message UpsertDocumentRequest {
-  Document document = 1;
-}
-
-message UpsertDocumentResponse {
-  bool ack = 1; 
+  string index = 1;
+  string type = 2;
+  string fields = 3;
 }
 
 message BatchUpsertDocumentRequest {
@@ -80,11 +101,17 @@ message BatchUpsertDocumentRequest {
 }
 
 message BatchUpsertDocumentResponse {
-  repeated UpsertDocumentRequest items = 1;
+  repeated UpsertDocumentResponse items = 1;
+}
+
+message UpsertDocumentResponse {
+  bool ack = 1;
 }
 
 message GetDocumentRequest {
-  string id = 1;
+  string index = 1;
+  string type = 2;
+  string id = 3;
 }
 
 message BatchGetDocumentRequest {
@@ -107,7 +134,9 @@ message SearchResponse {
 }
 
 message DeleteDocumentRequest {
-  string id = 1;
+  string index = 1;
+  string type = 2;
+  string id = 3;
 }
 
 message DeleteDocumentResponse {

@@ -70,6 +70,51 @@ func (c *ConnectionQuery) FromPB(q *pagination.ConnectionQuery) {
 	}).([]*Order)
 }
 
+func (c *ConnectionQuery) ToPB() *pagination.ConnectionQuery {
+	filterB, _ := json.Marshal(c.Filter)
+
+	pbquery := &pagination.ConnectionQuery{
+		NeedTotal: c.NeedTotal,
+		Fields:    c.Fields,
+		Filter:    string(filterB),
+		Orders: funk.Map(c.Orders, func(o *Order) *pagination.Order {
+			var direction pagination.OrderDirection
+			if o.Direction == OrderDirectionDesc {
+				direction = pagination.OrderDirection_DESC
+			} else {
+				direction = pagination.OrderDirection_ASC
+			}
+
+			return &pagination.Order{
+				Field:     o.Field,
+				Direction: direction,
+			}
+		}).([]*pagination.Order),
+	}
+
+	if c.First != nil {
+		pbquery.HasFirst = true
+		pbquery.First = int32(*c.First)
+	}
+
+	if c.Last != nil {
+		pbquery.HasLast = true
+		pbquery.Last = int32(*c.Last)
+	}
+
+	if c.Before != nil {
+		pbquery.HasBefore = true
+		pbquery.Before = *c.Before
+	}
+
+	if c.After != nil {
+		pbquery.HasAfter = true
+		pbquery.After = *c.After
+	}
+
+	return pbquery
+}
+
 type Edge struct {
 	Node   interface{} `json:"node"`
 	Cursor string      `json:"cursor"`

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/duolacloud/microbase/client/search"
 	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/olivere/elastic/v6"
 	// "github.com/olivere/elastic/v7"
@@ -22,7 +23,7 @@ func NewCursorPaginator(client *elastic.Client) *CursorPaginator {
 	}
 }
 
-func (p *CursorPaginator) Paginate(c context.Context, query *entity.CursorQuery, index, typ string) ([]*entity.Document, *entity.CursorExtra, error) {
+func (p *CursorPaginator) Paginate(c context.Context, query *entity.CursorQuery, index, typ string) ([]*search.Document, *entity.CursorExtra, error) {
 	filter, err := applyFilter(c, query.Filter)
 	if err != nil {
 		return nil, nil, err
@@ -39,7 +40,7 @@ func (p *CursorPaginator) Paginate(c context.Context, query *entity.CursorQuery,
 		if err != nil {
 			return nil, nil, err
 		}
-		extra.Total = int(total)
+		extra.Total = total
 	}
 
 	limit := query.Size + 1
@@ -76,9 +77,9 @@ func (p *CursorPaginator) Paginate(c context.Context, query *entity.CursorQuery,
 		}, nil
 	}
 
-	docs := make([]*entity.Document, len(result.Hits.Hits))
+	docs := make([]*search.Document, len(result.Hits.Hits))
 	for i, r := range result.Hits.Hits {
-		doc := &entity.Document{
+		doc := &search.Document{
 			Index: index,
 			Type:  typ,
 		}
@@ -97,7 +98,7 @@ func (p *CursorPaginator) Paginate(c context.Context, query *entity.CursorQuery,
 		docs = docs[:limit-1]
 	}
 
-	toCursor := func(doc *entity.Document) (string, error) {
+	toCursor := func(doc *search.Document) (string, error) {
 		orderFieldValues := make([]interface{}, len(query.Orders))
 		for i, order := range query.Orders {
 			v, ok := doc.Fields[order.Field]

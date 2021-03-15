@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/duolacloud/microbase/database/mongo"
+	"github.com/duolacloud/microbase/datasource/mongo"
 	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/micro/go-micro/v2/config"
 	"github.com/micro/go-micro/v2/config/source/memory"
