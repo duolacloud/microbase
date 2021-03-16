@@ -74,3 +74,8 @@ message ListQuery {
   repeated Order orders = 6;
   repeated string fields = 7;
 }
+
+message ListResponse {
+  repeated google.protobuf.Any items = 1;
+  PageInfo pageInfo = 2;
+}

@@ -4,19 +4,13 @@ import (
 	_gorm "github.com/jinzhu/gorm"
 )
 
-func pageQuery(queryHandler *_gorm.DB, pageNo int, pageSize int, resultPtr interface{}) (count int, pageCount int, err error) {
+func pageQuery(queryHandler *_gorm.DB, pageNo int, pageSize int, resultPtr interface{}) (total int64, err error) {
 	limit, offset := getLimitOffset(pageNo-1, pageSize)
 
-	count = 0
-	queryHandler.Count(&count)
+	queryHandler.Count(&total)
 	queryHandler.Limit(limit).Offset(offset).Find(resultPtr)
 	if err = queryHandler.Error; err != nil {
 		return
-	}
-
-	pageCount = count / pageSize
-	if count%pageSize != 0 {
-		pageCount++
 	}
 
 	return

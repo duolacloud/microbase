@@ -15,7 +15,7 @@ import (
 	"github.com/micro/go-micro/v2/config"
 )
 
-func NewGormTenancy(config config.Config, entityMap database.EntityMap) (multitenancy.Tenancy, error) {
+func NewGormTenancy(config config.Config, entityMap datasource.EntityMap) (multitenancy.Tenancy, error) {
 	driver := config.Get("db", "driver").String("")
 	connectionString := config.Get("db", "connection_string").String("")
 
@@ -124,7 +124,7 @@ func TableName(tableName string, tenantId string) string {
 	return fmt.Sprintf("%s_%s", tableName, tenantId)
 }
 
-func autoMigrate(tenantId string, entityMap database.EntityMap, db *gorm.DB) error {
+func autoMigrate(tenantId string, entityMap datasource.EntityMap, db *gorm.DB) error {
 	// ctx, span := trace.StartSpan(ctx, "tenancy.Migrate")
 	// defer span.End()
 	entities := entityMap.GetEntities()

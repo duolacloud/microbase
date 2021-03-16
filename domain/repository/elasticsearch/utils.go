@@ -196,7 +196,7 @@ func (n *queryVisitor) PostVisit(c context.Context, current *xtree.Node) error {
 
 func applyFilter(c context.Context, filter map[string]interface{}) (elastic.Query, error) {
 	if filter == nil || len(filter) == 0 {
-		return nil, nil
+		return elastic.NewBoolQuery(), nil
 	}
 
 	rootVisitor := &queryVisitor{

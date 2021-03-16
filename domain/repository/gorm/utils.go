@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/duolacloud/microbase/domain/entity"
+	"github.com/duolacloud/microbase/domain/repository"
 	"github.com/duolacloud/microbase/logger"
 	"github.com/duolacloud/microbase/types/smarttime"
 	_gorm "github.com/jinzhu/gorm"
@@ -144,7 +145,7 @@ func gormFilter(db *_gorm.DB, ms *_gorm.ModelStruct, key string, value interface
 func gormFilterIn(db *_gorm.DB, key string, value interface{}) (*_gorm.DB, error) {
 	values, ok := value.([]interface{})
 	if !ok {
-		return nil, ErrFilterValueType
+		return nil, repository.ErrFilterValueType
 	}
 
 	return db.Where(fmt.Sprintf("%s IN (?)", key), values), nil
@@ -153,7 +154,7 @@ func gormFilterIn(db *_gorm.DB, key string, value interface{}) (*_gorm.DB, error
 func gormFilterNotIn(db *_gorm.DB, key string, value interface{}) (*_gorm.DB, error) {
 	values, ok := value.([]interface{})
 	if !ok {
-		return nil, ErrFilterValueType
+		return nil, repository.ErrFilterValueType
 	}
 
 	return db.Where(fmt.Sprintf("%s NOT IN (?)", key), values), nil
@@ -162,10 +163,10 @@ func gormFilterNotIn(db *_gorm.DB, key string, value interface{}) (*_gorm.DB, er
 func gormFilterBetween(db *_gorm.DB, key string, value interface{}) (*_gorm.DB, error) {
 	values, ok := value.([]interface{})
 	if !ok {
-		return nil, ErrFilterValueType
+		return nil, repository.ErrFilterValueType
 	}
 	if len(values) != 2 {
-		return nil, ErrFilterValueSize
+		return nil, repository.ErrFilterValueSize
 	}
 	if values[0] != nil && values[1] != nil {
 		return db.Where(fmt.Sprintf("%s between ? and ?", key), values[0], values[1]), nil

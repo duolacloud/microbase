@@ -102,7 +102,7 @@ func TestCrud(t *testing.T) {
 	assert := assert.New(t)
 
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, "tenant-id", "tid26")
+	ctx = context.WithValue(ctx, "tenant-id", "tid27")
 
 	userRepo, err := getRepo()
 	if err != nil {
@@ -273,6 +273,9 @@ func TestCursorList(t *testing.T) {
 }
 
 func testCursorList(t *testing.T, repo repository.BaseRepository) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "tenant-id", "tid27")
+
 	for i := 0; i < 100; i++ {
 		age := i + 10
 		name := fmt.Sprintf("关羽%d", i)
@@ -282,7 +285,7 @@ func testCursorList(t *testing.T, repo repository.BaseRepository) {
 			Age:  &age,
 		}
 
-		_, err := repo.Upsert(context.Background(), user)
+		_, err := repo.Upsert(ctx, user)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -295,11 +298,8 @@ func testCursorList(t *testing.T, repo repository.BaseRepository) {
 			Cursor:    cursor,
 			Fields:    []string{"name", "age"},
 			Direction: entity.CursorDirectionAfter,
-			Filter: map[string]interface{}{
+			Filter:    map[string]interface{}{
 				// "name": "3",
-				"age": map[string]interface{}{
-					"GTE": 15,
-				},
 			},
 			// Orders: []*entity.Order{
 			// {
@@ -313,7 +313,7 @@ func testCursorList(t *testing.T, repo repository.BaseRepository) {
 		}
 
 		items := make([]*User, 0)
-		extra, err := repo.List(context.Background(), cursorQuery, &User{}, &items)
+		extra, err := repo.List(ctx, cursorQuery, &User{}, &items)
 		if err != nil {
 			t.Fatal(err)
 		}

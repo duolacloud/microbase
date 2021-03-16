@@ -118,7 +118,7 @@ func (r *BaseRepository) Delete(c context.Context, m entity.Entity) error {
 	return db.Table(table).Delete(m).Error
 }
 
-func (r *BaseRepository) Page(c context.Context, m entity.Entity, query *entity.PageQuery, resultPtr interface{}) (total int, pageCount int, err error) {
+func (r *BaseRepository) Page(c context.Context, m entity.Entity, query *entity.PageQuery, resultPtr interface{}) (total int64, err error) {
 	db, err := r.DB(c)
 	if err != nil {
 		return
@@ -140,7 +140,7 @@ func (r *BaseRepository) Page(c context.Context, m entity.Entity, query *entity.
 		return
 	}
 
-	total, pageCount, err = pageQuery(dbHandler, query.PageNo, query.PageSize, resultPtr)
+	total, err = pageQuery(dbHandler, query.PageNo, query.PageSize, resultPtr)
 
 	return
 }

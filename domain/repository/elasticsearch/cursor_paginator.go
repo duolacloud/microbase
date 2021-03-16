@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/duolacloud/microbase/client/search"
 	"github.com/duolacloud/microbase/domain/entity"
@@ -62,6 +63,8 @@ func (p *CursorPaginator) Paginate(c context.Context, query *entity.CursorQuery,
 	rootFilters = append(rootFilters, cursorFilters...)
 
 	searchService.Query(elastic.NewBoolQuery().Filter(rootFilters...))
+	b, _ := json.Marshal(query.Orders)
+	log.Printf("orders: %v", string(b))
 	p.applyOrders(searchService, query.Orders, query.Direction == entity.CursorDirectionBefore)
 
 	result, err := searchService.Do(c)
