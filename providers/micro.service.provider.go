@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/micro/go-micro/v2"
+	"github.com/micro/go-micro/v2/client"
 	"github.com/micro/go-micro/v2/registry"
 )
 
@@ -64,8 +65,13 @@ func StartMicroService(lifecycle fx.Lifecycle, srv micro.Service) {
 	})
 }
 
+func newMicroClient(service micro.Service) client.Client {
+	return service.Client()
+}
+
 func MakeMicroServiceOpts(c *cli.Context) fx.Option {
 	return fx.Options(
+		fx.Provide(newMicroClient),
 		fx.Provide(NewMicroService),
 		fx.Invoke(StartMicroService),
 	)
