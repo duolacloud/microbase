@@ -36,9 +36,13 @@ func (m *IndexModel) CreateIndex(c context.Context) error {
 	for i := 0; i < reflectType.NumField(); i++ {
 		if fieldStruct := reflectType.Field(i); ast.IsExported(fieldStruct.Name) {
 			settings := parseTagSetting(fieldStruct.Tag)
-			name := fieldStruct.Tag.Get("json")
-			if len(name) == 0 {
+			jsonTag := fieldStruct.Tag.Get("json")
+			ns := strings.Split(jsonTag, ",")
+			var name string
+			if len(ns) == 0 {
 				name = strings.ToLower(fieldStruct.Name)
+			} else {
+				name = ns[0]
 			}
 
 			properties[name] = settings

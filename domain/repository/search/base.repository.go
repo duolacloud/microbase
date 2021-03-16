@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -10,7 +11,7 @@ import (
 	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/domain/repository"
 	breflect "github.com/duolacloud/microbase/reflect"
-	"github.com/mitchellh/mapstructure"
+
 	"github.com/thoas/go-funk"
 )
 
@@ -47,16 +48,13 @@ func (r *BaseRepository) Create(c context.Context, ent entity.Entity) error {
 	typ := breflect.TheNamingStrategy.Table(ms.Name)
 	index := r.DataSourceProvider.ProvideTable(c, typ)
 
-	var fields map[string]interface{}
-	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Result:  &fields,
-		TagName: "json",
-	})
+	buf, err := json.Marshal(ent)
 	if err != nil {
 		return err
 	}
 
-	err = decoder.Decode(ent)
+	var fields map[string]interface{}
+	err = json.Unmarshal(buf, &fields)
 	if err != nil {
 		return err
 	}
@@ -81,16 +79,13 @@ func (r *BaseRepository) Upsert(c context.Context, ent entity.Entity) (*reposito
 	typ := breflect.TheNamingStrategy.Table(ms.Name)
 	index := r.DataSourceProvider.ProvideTable(c, typ)
 
-	var fields map[string]interface{}
-	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Result:  &fields,
-		TagName: "json",
-	})
+	buf, err := json.Marshal(ent)
 	if err != nil {
 		return nil, err
 	}
 
-	err = decoder.Decode(ent)
+	var fields map[string]interface{}
+	err = json.Unmarshal(buf, &fields)
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +118,13 @@ func (r *BaseRepository) Update(c context.Context, ent entity.Entity, data inter
 	typ := breflect.TheNamingStrategy.Table(ms.Name)
 	index := r.DataSourceProvider.ProvideTable(c, typ)
 
+	buf, err := json.Marshal(ent)
+	if err != nil {
+		return err
+	}
+
 	var fields map[string]interface{}
-	err = mapstructure.Decode(data, fields)
+	err = json.Unmarshal(buf, &fields)
 	if err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func (r *BaseRepository) Get(c context.Context, ent entity.Entity) error {
 	index := r.DataSourceProvider.ProvideTable(c, typ)
 
 	// 命名约定，必须有 id 字段
-	id, ok := funk.Get(ent, "id").(string)
+	id, ok := funk.Get(ent, "ID").(string)
 	if !ok {
 		return errors.New(fmt.Sprintf("no id field for entity %v", ent))
 	}
@@ -164,10 +164,16 @@ func (r *BaseRepository) Get(c context.Context, ent entity.Entity) error {
 		return nil
 	}
 
-	err = mapstructure.Decode(doc.Fields, ent)
+	b, err := json.Marshal(doc.Fields)
 	if err != nil {
 		return err
 	}
+
+	err = json.Unmarshal(b, &ent)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -222,18 +228,14 @@ func (r *BaseRepository) Page(c context.Context, ent entity.Entity, query *entit
 	for i, doc := range docs {
 		elem := reflect.New(resultType)
 
-		decoder, err1 := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-			Result:  elem.Interface(),
-			TagName: "json",
-		})
-
-		if err != nil {
+		b, err1 := json.Marshal(doc.Fields)
+		if err1 != nil {
 			err = err1
 			return
 		}
-
-		err = decoder.Decode(doc.Fields)
-		if err != nil {
+		err1 = json.Unmarshal(b, elem.Interface())
+		if err1 != nil {
+			err = err1
 			return
 		}
 
@@ -272,15 +274,12 @@ func (r *BaseRepository) List(c context.Context, query *entity.CursorQuery, ent 
 	for i, doc := range docs {
 		elem := reflect.New(resultType)
 
-		decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-			Result:  elem.Interface(),
-			TagName: "json",
-		})
+		b, err := json.Marshal(doc.Fields)
 		if err != nil {
 			return nil, err
 		}
 
-		err = decoder.Decode(doc.Fields)
+		err = json.Unmarshal(b, elem.Interface())
 		if err != nil {
 			return nil, err
 		}

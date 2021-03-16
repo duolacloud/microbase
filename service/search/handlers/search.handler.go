@@ -7,6 +7,7 @@ import (
 
 	"github.com/duolacloud/microbase/client/search"
 	"github.com/duolacloud/microbase/domain/entity"
+	"github.com/duolacloud/microbase/logger"
 	"github.com/duolacloud/microbase/proto/pagination"
 	pb "github.com/duolacloud/microbase/proto/search"
 	"github.com/duolacloud/microbase/service/search/repositories"
@@ -33,6 +34,8 @@ func (h *searchServiceHandler) Create(c context.Context, req *pb.Document, rsp *
 	if err != nil {
 		return err
 	}
+
+	log.Printf("Create fields: %v", fields)
 
 	return h.documentRepository.Create(c, &search.Document{
 		Index:  req.Index,
@@ -84,6 +87,7 @@ func (h *searchServiceHandler) BatchUpsert(c context.Context, req *pb.BatchUpser
 }
 
 func (h *searchServiceHandler) Get(c context.Context, req *pb.GetDocumentRequest, rsp *pb.Document) error {
+	logger.Infof("Get index: %v", req.Index, req.Type, req.Id)
 	doc, err := h.documentRepository.Get(c, req.Index, req.Type, req.Id)
 	if err != nil {
 		return err
@@ -117,8 +121,6 @@ func (h *searchServiceHandler) Search(c context.Context, req *pb.SearchRequest, 
 func (h *searchServiceHandler) List(c context.Context, req *pb.ListRequest, rsp *pb.ListResponse) error {
 	var query entity.CursorQuery
 	query.FromPB(req.Query)
-
-	log.Printf("fuck")
 
 	docs, extra, err := h.documentRepository.List(c, &query, req.Index, req.Type)
 	if err != nil {

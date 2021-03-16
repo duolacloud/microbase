@@ -25,13 +25,13 @@ import (
 )
 
 type User struct {
-	ID         string     `json:"id" elastic:"type:keyword"`
-	Name       string     `json:"name" elastic:"type:keyword"`
-	Age        int        `json:"age" elastic:"type:integer"`
-	CreateTime time.Time  `json:"ctime" elastic:"type:date"`
-	UpdateTime time.Time  `json:"mtime" elastic:"type:date"`
-	DeleteTime *time.Time `json:"dtime" elastic:"type:date"`
-	Deleted    bool       `json:"deleted" elastic:"type:boolean"`
+	ID         string     `json:"id,omitempty" elastic:"type:keyword"`
+	Name       *string    `json:"name,omitempty" elastic:"type:keyword"`
+	Age        *int       `json:"age,omitempty" elastic:"type:integer"`
+	CreateTime *time.Time `json:"ctime,omitempty" elastic:"type:date"`
+	UpdateTime *time.Time `json:"mtime,omitempty" elastic:"type:date"`
+	DeleteTime *time.Time `json:"dtime,omitempty" elastic:"type:date"`
+	Deleted    *bool      `json:"deleted,omitempty" elastic:"type:boolean"`
 }
 
 func (u *User) Unique() interface{} {
@@ -109,20 +109,25 @@ func TestCrud(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	name1 := "吕布"
+	age1 := 28
+	now := time.Now()
 	user1 := &User{
 		ID:         "1",
-		Name:       "吕布",
-		Age:        28,
-		CreateTime: time.Now(),
-		UpdateTime: time.Now(),
+		Name:       &name1,
+		Age:        &age1,
+		CreateTime: &now,
+		UpdateTime: &now,
 	}
 
+	name2 := "貂蝉"
+	age2 := 21
 	user2 := &User{
 		ID:         "2",
-		Name:       "貂蝉",
-		Age:        21,
-		CreateTime: time.Now(),
-		UpdateTime: time.Now(),
+		Name:       &name2,
+		Age:        &age2,
+		CreateTime: &now,
+		UpdateTime: &now,
 	}
 
 	{
@@ -138,9 +143,12 @@ func TestCrud(t *testing.T) {
 		logger.Info("插入记录成功")
 	}
 
+	name3 := "关羽"
+	age3 := 38
 	user3 := &User{
-		Name: "关羽",
-		Age:  38,
+		ID:   "3",
+		Name: &name3,
+		Age:  &age3,
 	}
 	{
 		change, err := userRepo.Upsert(ctx, user3)
@@ -149,9 +157,10 @@ func TestCrud(t *testing.T) {
 	}
 
 	{
+		name4 := "赵云"
 		user4 := &User{
 			ID:   user1.ID,
-			Name: "赵云",
+			Name: &name4,
 		}
 		err := userRepo.Update(ctx, user4, user4)
 		if assert.Error(err) {
@@ -160,7 +169,7 @@ func TestCrud(t *testing.T) {
 
 		data := map[string]interface{}{
 			"name": "孙悟空",
-			"age":  0,
+			"age":  10,
 		}
 
 		err = userRepo.Update(ctx, &User{}, data)
@@ -182,7 +191,10 @@ func TestCrud(t *testing.T) {
 		if assert.Error(err) {
 			t.Fatal(err)
 		}
-		logger.Info("找到对应记录")
+
+		b, _ := json.Marshal(findUser)
+
+		logger.Infof("找到对应记录: %v", string(b))
 	}
 
 	{
@@ -262,10 +274,12 @@ func TestCursorList(t *testing.T) {
 
 func testCursorList(t *testing.T, repo repository.BaseRepository) {
 	for i := 0; i < 100; i++ {
+		age := i + 10
+		name := fmt.Sprintf("关羽%d", i)
 		user := &User{
 			ID:   fmt.Sprintf("%d", i),
-			Name: fmt.Sprintf("关羽%d", i),
-			Age:  i + 10,
+			Name: &name,
+			Age:  &age,
 		}
 
 		_, err := repo.Upsert(context.Background(), user)

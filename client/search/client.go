@@ -90,14 +90,16 @@ func (s *searchClient) Get(c context.Context, index, typ, id string) (*Document,
 		return nil, err
 	}
 
-	doc := &Document{
-		Index: rsp.Index,
-		Type:  rsp.Type,
-	}
-
-	err = json.Unmarshal([]byte(rsp.Fields), &doc.Fields)
+	var fields map[string]interface{}
+	err = json.Unmarshal([]byte(rsp.Fields), &fields)
 	if err != nil {
 		return nil, err
+	}
+
+	doc := &Document{
+		Index:  rsp.Index,
+		Type:   rsp.Type,
+		Fields: fields,
 	}
 
 	return doc, nil

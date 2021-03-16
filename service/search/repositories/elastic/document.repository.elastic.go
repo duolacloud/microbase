@@ -3,11 +3,14 @@ package elastic
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"log"
 
 	"github.com/duolacloud/microbase/client/search"
 	"github.com/duolacloud/microbase/domain/entity"
 	"github.com/duolacloud/microbase/domain/repository"
 	"github.com/duolacloud/microbase/domain/repository/elasticsearch"
+	"github.com/duolacloud/microbase/logger"
 	"github.com/duolacloud/microbase/service/search/repositories"
 
 	"github.com/olivere/elastic/v6"
@@ -69,22 +72,30 @@ func (r *DocumentRepository) Upsert(c context.Context, doc *search.Document) err
 }
 
 func (r *DocumentRepository) Update(c context.Context, doc *search.Document) error {
+	b, _ := json.Marshal(doc.Fields)
+	logger.Infof("DocumentRepository Update: %v", string(b))
+
 	client, err := r.client(c)
 	if err != nil {
 		return err
 	}
 	index := r.DataSourceProvider.ProvideTable(c, doc.Index)
 
+	id, ok := doc.Fields["id"].(string)
+	if !ok {
+		return errors.New("update need id")
+	}
+
 	_, err = client.Update().
 		Index(index).
 		Type(doc.Type).
-		Id(doc.Fields["id"].(string)).
+		Id(id).
 		Doc(doc.Fields).
 		Do(c)
 	return err
 }
 
-func (r *DocumentRepository) Get(c context.Context, id string, index, typ string) (*search.Document, error) {
+func (r *DocumentRepository) Get(c context.Context, index, typ, id string) (*search.Document, error) {
 	client, err := r.client(c)
 	if err != nil {
 		return nil, err
@@ -96,6 +107,7 @@ func (r *DocumentRepository) Get(c context.Context, id string, index, typ string
 		Type(typ).
 		Id(id).
 		Do(c)
+
 	if err != nil {
 		return nil, err
 	}
@@ -109,6 +121,8 @@ func (r *DocumentRepository) Get(c context.Context, id string, index, typ string
 		Type:  typ,
 	}
 	err = json.Unmarshal(*res.Source, &doc.Fields)
+	log.Printf("DocumentRepository Get, index: %s, type: %s, id: %s, res: %v", index, typ, id, doc.Fields)
+
 	if err != nil {
 		return nil, err
 	}

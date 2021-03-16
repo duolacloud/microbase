@@ -98,7 +98,7 @@ services:
           - elasticsearch
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.6.0
+    image: docker.elastic.co/kibana/kibana:6.8.8
     ports:
       - "5601:5601"
 

@@ -17,6 +17,7 @@ import (
 type Foo struct {
 	ID    interface{} `msgpack:"i"`
 	Value interface{} `msgpack:"v"`
+	Map   map[string]interface{}
 }
 
 func (c *Foo) Marshal(w io.Writer) error {
@@ -42,6 +43,10 @@ func TestMsgPack(t *testing.T) {
 	c := &Foo{
 		ID:    "37433482-5a06-4db5-91c6-591b1d15f6af",
 		Value: vv.Interface(),
+		Map: map[string]interface{}{
+			"name":     "张三",
+			"birthday": time.Now(),
+		},
 	}
 
 	w := new(bytes.Buffer)
@@ -60,5 +65,5 @@ func TestMsgPack(t *testing.T) {
 		t.Fatal(err)
 	}
 	var v = c1.Value
-	t.Logf("c1: %v, v: %v", c1, v)
+	t.Logf("c1: %v, v: %v, map: %v", c1, v, c1.Map)
 }
