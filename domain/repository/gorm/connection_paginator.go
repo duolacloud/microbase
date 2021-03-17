@@ -310,15 +310,15 @@ func (p *connectionPaginator) ensureOrders(modelStruct *_gorm.ModelStruct, query
 
 	if matchCount != len(fieldIDs) {
 		if query.Orders == nil {
-			query.Orders = make([]*entity.Order, len(fieldIDs))
+			query.Orders = make([]*entity.Order, 0)
 		}
 
-		for i, fieldID := range fieldIDs {
+		for _, fieldID := range fieldIDs {
 			order := &entity.Order{
 				Field:     fieldID.DBName,
 				Direction: entity.OrderDirectionAsc,
 			}
-			query.Orders[i] = order
+			query.Orders = append(query.Orders, order)
 		}
 	}
 }
