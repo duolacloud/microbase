@@ -18,7 +18,7 @@ type ConnectionQuery struct {
 	NeedTotal bool                   `json:"needTotal"`
 }
 
-func (c *ConnectionQuery) FromPB(q *pagination.ConnectionQuery) {
+func ConnectionQueryFromPB(q *pagination.ConnectionQuery) *ConnectionQuery {
 	var filter map[string]interface{}
 	if len(q.Filter) != 0 {
 		_ = json.Unmarshal([]byte(q.Filter), &filter)
@@ -48,26 +48,28 @@ func (c *ConnectionQuery) FromPB(q *pagination.ConnectionQuery) {
 		before = &q.Before
 	}
 
-	c.First = first
-	c.Last = last
-	c.Before = before
-	c.After = after
-	c.Filter = filter
-	c.Fields = q.Fields
-	c.NeedTotal = q.NeedTotal
-	c.Orders = funk.Map(q.Orders, func(o *pagination.Order) *Order {
-		var direction OrderDirection
-		if o.Direction == pagination.OrderDirection_DESC {
-			direction = OrderDirectionDesc
-		} else {
-			direction = OrderDirectionAsc
-		}
+	return &ConnectionQuery{
+		First:     first,
+		Last:      last,
+		Before:    before,
+		After:     after,
+		Filter:    filter,
+		Fields:    q.Fields,
+		NeedTotal: q.NeedTotal,
+		Orders: funk.Map(q.Orders, func(o *pagination.Order) *Order {
+			var direction OrderDirection
+			if o.Direction == pagination.OrderDirection_DESC {
+				direction = OrderDirectionDesc
+			} else {
+				direction = OrderDirectionAsc
+			}
 
-		return &Order{
-			Field:     o.Field,
-			Direction: direction,
-		}
-	}).([]*Order)
+			return &Order{
+				Field:     o.Field,
+				Direction: direction,
+			}
+		}).([]*Order),
+	}
 }
 
 func (c *ConnectionQuery) ToPB() *pagination.ConnectionQuery {

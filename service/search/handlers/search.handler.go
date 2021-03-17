@@ -167,9 +167,8 @@ func (h *searchServiceHandler) Page(c context.Context, req *pb.PageRequest, rsp 
 }
 
 func (h *searchServiceHandler) Connection(c context.Context, req *pb.ConnectionRequest, rsp *pagination.Connection) error {
-	var query entity.ConnectionQuery
-	query.FromPB(req.Query)
-	conn, err := h.documentRepository.Connection(c, &query, req.Index, req.Type)
+	query := entity.ConnectionQueryFromPB(req.Query)
+	conn, err := h.documentRepository.Connection(c, query, req.Index, req.Type)
 	if err != nil {
 		return err
 	}

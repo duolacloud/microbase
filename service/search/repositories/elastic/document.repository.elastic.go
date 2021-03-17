@@ -129,18 +129,23 @@ func (r *DocumentRepository) Get(c context.Context, index, typ, id string) (*sea
 	return doc, nil
 }
 
-func (r *DocumentRepository) Delete(c context.Context, id string, index, typ string) error {
+func (r *DocumentRepository) Delete(c context.Context, index, typ, id string) error {
 	client, err := r.client(c)
 	if err != nil {
 		return err
 	}
-	index = r.DataSourceProvider.ProvideTable(c, index)
 
+	log.Printf("DocumentRepository.Delete, index: %s, type: %s, id: %s", index, typ, id)
 	_, err = client.Delete().
 		Index(index).
 		Type(typ).
 		Id(id).
 		Do(c)
+
+	if elastic.IsNotFound(err) {
+		return nil
+	}
+
 	return err
 }
 

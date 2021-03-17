@@ -48,11 +48,6 @@ func (p *CursorPaginator) Paginate(c context.Context, query *entity.CursorQuery,
 
 	p.ensureOrders(query)
 
-	searchService := p.client.Search().
-		Index(index).
-		Type(typ).
-		Size(limit)
-
 	cursorFilters, err := p.applyCursor(query)
 	if err != nil {
 		return nil, nil, err
@@ -62,7 +57,12 @@ func (p *CursorPaginator) Paginate(c context.Context, query *entity.CursorQuery,
 	rootFilters = append(rootFilters, filter)
 	rootFilters = append(rootFilters, cursorFilters...)
 
-	searchService.Query(elastic.NewBoolQuery().Filter(rootFilters...))
+	searchService := p.client.Search().
+		Index(index).
+		Type(typ).
+		Size(limit).
+		Query(elastic.NewBoolQuery().Filter(rootFilters...))
+
 	b, _ := json.Marshal(query.Orders)
 	log.Printf("orders: %v", string(b))
 	p.applyOrders(searchService, query.Orders, query.Direction == entity.CursorDirectionBefore)

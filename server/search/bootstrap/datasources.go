@@ -1,28 +1,17 @@
 package bootstrap
 
 import (
-	"github.com/duolacloud/microbase/datasource"
 	"github.com/duolacloud/microbase/datasource/elasticsearch"
 	"github.com/duolacloud/microbase/domain/repository"
+	"github.com/duolacloud/microbase/service/search/providers"
 	"go.uber.org/fx"
 )
-
-type EntityMap struct {
-}
-
-func (m *EntityMap) GetEntities() []interface{} {
-	return []interface{}{}
-}
-
-func NewEntityMap() datasource.EntityMap {
-	return &EntityMap{}
-}
 
 var Datasources = fx.Provide(
 	elasticsearch.NewElasticSearchClient,
 	elasticsearch.NewElasticSearchTenancy,
 	repository.NewMultitenancyProvider,
-	NewEntityMap,
+	providers.NewEntityMap,
 )
 
 var DatasourceOpts = fx.Options(

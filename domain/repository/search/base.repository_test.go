@@ -350,36 +350,52 @@ func TestConnectionPaginate(t *testing.T) {
 }
 
 func testConnectionPaginate(t *testing.T, repo repository.BaseRepository) {
-	/*for i := 0; i < 100; i++ {
+	for i := 0; i < 5; i++ {
+		name := "关羽"
+		age := 1 + i
+		now := time.Now()
 		user := &User{
-			Name: "关羽",
-			Age:  38,
+			ID:         fmt.Sprintf("%d", i+1),
+			Name:       &name,
+			Age:        &age,
+			CreateTime: &now,
+			UpdateTime: &now,
 		}
 
-		change, _ := repo.Upsert(context.Background(), user)
-		t.Logf("change: %v", change)
-		time.Sleep(time.Second * 2)
-	}*/
+		// err := repo.Delete(context.Background(), user)
+		_, err := repo.Upsert(context.Background(), user)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	// h, _ := time.ParseDuration("1s")
 	// t1 := user1.Ctime.Add(h)
 
+	var before string
 	var after string
-	first := 7
+	last := 3
+	// first := 3
+	round := 0
 	for {
+		round += 1
+
 		connQuery := &entity.ConnectionQuery{
 			NeedTotal: true,
-			After:     &after,
-			Fields:    []string{"name", "ctime"},
-			Filter:    map[string]interface{}{},
-			Orders: []*entity.Order{
+			// After:     &after,
+			Before: &before,
+			Fields: []string{"name", "ctime"},
+			Filter: map[string]interface{}{},
+			/*Orders: []*entity.Order{
 				{
 					Field: "name",
 				},
 				{
 					Field: "ctime",
 				},
-			},
-			First: &first,
+			},*/
+			Last: &last,
+			// First: &first,
 		}
 
 		conn, err := repo.Connection(context.Background(), connQuery, &User{})
@@ -389,9 +405,10 @@ func testConnectionPaginate(t *testing.T, repo repository.BaseRepository) {
 
 		b, _ := json.Marshal(conn.Edges)
 		s := string(b)
+		log.Printf("==================== round: %d", round)
 		log.Printf("=== edges: %s", s)
 		//log.Printf("=== extra: %v", extra)
-		log.Printf("=== after: %v", after)
+		log.Printf("=== after: %v, before: %v", after, before)
 		log.Printf("=== edges count: %d", len(conn.Edges))
 		log.Printf("=== total: %d", conn.Total)
 		log.Printf("=== startCursor: %s", conn.PageInfo.StartCursor)
@@ -400,6 +417,7 @@ func testConnectionPaginate(t *testing.T, repo repository.BaseRepository) {
 		log.Printf("=== hasNext: %v", conn.PageInfo.HasNext)
 
 		after = conn.PageInfo.EndCursor
+		before = conn.PageInfo.StartCursor
 
 		if !conn.PageInfo.HasPrevious || !conn.PageInfo.HasNext {
 			break

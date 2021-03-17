@@ -191,7 +191,7 @@ func (r *BaseRepository) Delete(c context.Context, ent entity.Entity) error {
 	index := r.DataSourceProvider.ProvideTable(c, typ)
 
 	// 命名约定，必须有 id 字段
-	id, ok := funk.Get(ent, "id").(string)
+	id, ok := funk.Get(ent, "ID").(string)
 	if !ok {
 		return errors.New(fmt.Sprintf("no id field for entity %v", ent))
 	}
