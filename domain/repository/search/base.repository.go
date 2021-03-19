@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 
 	"github.com/duolacloud/microbase/client/search"
@@ -306,11 +305,28 @@ func (r *BaseRepository) Connection(c context.Context, query *entity.ConnectionQ
 	typ := breflect.TheNamingStrategy.Table(ms.Name)
 	index := r.DataSourceProvider.ProvideTable(c, typ)
 
-	log.Printf("BaseRepository.Connection, index: %v, typ: %v", index, typ)
-
 	conn, err := searchClient.Connection(c, query, index, typ)
 	if err != nil {
 		return nil, err
+	}
+
+	resultType := reflect.ValueOf(ent).Type().Elem()
+	for _, edge := range conn.Edges {
+		elem := reflect.New(resultType)
+
+		doc := edge.Node.(*search.Document)
+
+		b, err := json.Marshal(doc.Fields)
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(b, elem.Interface())
+		if err != nil {
+			return nil, err
+		}
+
+		edge.Node = elem.Interface()
 	}
 
 	return conn, nil

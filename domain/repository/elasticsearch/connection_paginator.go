@@ -77,6 +77,8 @@ func (p *ConnectionPaginator) Paginate(c context.Context, query *entity.Connecti
 		}
 	}
 
+	log.Printf("connection query.NeedTotal: %v, total: %v", query.NeedTotal, conn.Total)
+
 	p.ensureOrders(&query.Orders)
 
 	cursorFilters, err := p.applyCursor(query)
@@ -137,13 +139,26 @@ func (p *ConnectionPaginator) Paginate(c context.Context, query *entity.Connecti
 			return
 		}
 
+		log.Printf("docs[%d] = %v", i, string(*r.Source))
+
 		docs[i] = doc
 	}
 
 	if limit == len(docs) {
-		conn.PageInfo.HasNext = true
-		conn.PageInfo.HasPrevious = true
+		if query.Last != nil {
+			conn.PageInfo.HasPrevious = true
+		} else {
+			conn.PageInfo.HasNext = true
+		}
 		docs = docs[:limit-1]
+	}
+
+	if query.After != nil {
+		conn.PageInfo.HasPrevious = true
+	}
+
+	if query.Before != nil {
+		conn.PageInfo.HasNext = true
 	}
 
 	var nodeAt func(int) *search.Document

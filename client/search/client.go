@@ -186,6 +186,8 @@ func (s *searchClient) Connection(c context.Context, query *entity.ConnectionQue
 		return nil, err
 	}
 
+	log.Printf("client receive: %v", rsp.Total)
+
 	return &entity.Connection{
 		Total: rsp.Total,
 		Edges: funk.Map(rsp.Edges, func(e *pagination.Edge) *entity.Edge {

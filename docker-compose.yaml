@@ -81,7 +81,7 @@ services:
       - xpack.security.enabled=false
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
-      - "discovery.zen.ping.unicast.hosts=elastic"
+      - "discovery.type=single-node"
       - "logger.level=DEBUG"
     ulimits:
       memlock:
@@ -101,6 +101,12 @@ services:
     image: docker.elastic.co/kibana/kibana:6.8.8
     ports:
       - "5601:5601"
+    environment:
+      - "elasticsearch.hosts=http://elasticsearch:9200" #设置访问elasticsearch的地址
+    networks:
+      biz:
+        aliases:
+          - kibana
 
   kafka:
     image: debezium/kafka:1.2
