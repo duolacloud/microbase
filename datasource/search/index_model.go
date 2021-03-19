@@ -45,7 +45,9 @@ func (m *IndexModel) CreateIndex(c context.Context) error {
 				name = ns[0]
 			}
 
-			properties[name] = settings
+			if name != "-" {
+				properties[name] = settings
+			}
 		}
 	}
 
