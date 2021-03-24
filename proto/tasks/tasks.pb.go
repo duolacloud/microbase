@@ -7,8 +7,8 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import api "github.com/duolacloud/microbase/proto/api"
-import duration "github.com/golang/protobuf/ptypes/duration"
-import timestamp "github.com/golang/protobuf/ptypes/timestamp"
+import durationpb "google.golang.org/protobuf/types/known/durationpb"
+import timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
 import (
 	context "golang.org/x/net/context"
@@ -27,10 +27,10 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Timestamp from public import google/protobuf/timestamp.proto
-type Timestamp = timestamp.Timestamp
+type Timestamp = timestamppb.Timestamp
 
 // Duration from public import google/protobuf/duration.proto
-type Duration = duration.Duration
+type Duration = durationpb.Duration
 
 type HttpMethod int32
 
@@ -394,15 +394,15 @@ func (m *ResponseView) XXX_DiscardUnknown() {
 var xxx_messageInfo_ResponseView proto.InternalMessageInfo
 
 type Task struct {
-	Name             string               `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	ScheduleTime     *timestamp.Timestamp `protobuf:"bytes,3,opt,name=scheduleTime,proto3" json:"scheduleTime,omitempty"`
-	CreateTime       *timestamp.Timestamp `protobuf:"bytes,4,opt,name=createTime,proto3" json:"createTime,omitempty"`
-	DispatchDeadline *duration.Duration   `protobuf:"bytes,5,opt,name=dispatchDeadline,proto3" json:"dispatchDeadline,omitempty"`
-	DispatchCount    int32                `protobuf:"varint,6,opt,name=dispatchCount,proto3" json:"dispatchCount,omitempty"`
-	ResponseCount    int32                `protobuf:"varint,7,opt,name=responseCount,proto3" json:"responseCount,omitempty"`
-	FirstAttempt     *Attempt             `protobuf:"bytes,8,opt,name=firstAttempt,proto3" json:"firstAttempt,omitempty"`
-	LastAttempt      *Attempt             `protobuf:"bytes,9,opt,name=lastAttempt,proto3" json:"lastAttempt,omitempty"`
-	View             Task_View            `protobuf:"varint,10,opt,name=view,proto3,enum=tasks.Task_View" json:"view,omitempty"`
+	Name             string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	ScheduleTime     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=scheduleTime,proto3" json:"scheduleTime,omitempty"`
+	CreateTime       *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	DispatchDeadline *durationpb.Duration   `protobuf:"bytes,5,opt,name=dispatchDeadline,proto3" json:"dispatchDeadline,omitempty"`
+	DispatchCount    int32                  `protobuf:"varint,6,opt,name=dispatchCount,proto3" json:"dispatchCount,omitempty"`
+	ResponseCount    int32                  `protobuf:"varint,7,opt,name=responseCount,proto3" json:"responseCount,omitempty"`
+	FirstAttempt     *Attempt               `protobuf:"bytes,8,opt,name=firstAttempt,proto3" json:"firstAttempt,omitempty"`
+	LastAttempt      *Attempt               `protobuf:"bytes,9,opt,name=lastAttempt,proto3" json:"lastAttempt,omitempty"`
+	View             Task_View              `protobuf:"varint,10,opt,name=view,proto3,enum=tasks.Task_View" json:"view,omitempty"`
 	// Types that are valid to be assigned to PayloadType:
 	//	*Task_HttpRequest
 	//	*Task_PullMessage
@@ -443,21 +443,21 @@ func (m *Task) GetName() string {
 	return ""
 }
 
-func (m *Task) GetScheduleTime() *timestamp.Timestamp {
+func (m *Task) GetScheduleTime() *timestamppb.Timestamp {
 	if m != nil {
 		return m.ScheduleTime
 	}
 	return nil
 }
 
-func (m *Task) GetCreateTime() *timestamp.Timestamp {
+func (m *Task) GetCreateTime() *timestamppb.Timestamp {
 	if m != nil {
 		return m.CreateTime
 	}
 	return nil
 }
 
-func (m *Task) GetDispatchDeadline() *duration.Duration {
+func (m *Task) GetDispatchDeadline() *durationpb.Duration {
 	if m != nil {
 		return m.DispatchDeadline
 	}
@@ -926,13 +926,13 @@ func (m *PullMessage) GetTag() string {
 }
 
 type Attempt struct {
-	ScheduleTime         *timestamp.Timestamp `protobuf:"bytes,1,opt,name=scheduleTime,proto3" json:"scheduleTime,omitempty"`
-	DispatchTime         *timestamp.Timestamp `protobuf:"bytes,2,opt,name=dispatchTime,proto3" json:"dispatchTime,omitempty"`
-	ResponseTime         *timestamp.Timestamp `protobuf:"bytes,3,opt,name=responseTime,proto3" json:"responseTime,omitempty"`
-	ResponseStatus       *api.Status          `protobuf:"bytes,4,opt,name=responseStatus,proto3" json:"responseStatus,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
+	ScheduleTime         *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=scheduleTime,proto3" json:"scheduleTime,omitempty"`
+	DispatchTime         *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=dispatchTime,proto3" json:"dispatchTime,omitempty"`
+	ResponseTime         *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=responseTime,proto3" json:"responseTime,omitempty"`
+	ResponseStatus       *api.Status            `protobuf:"bytes,4,opt,name=responseStatus,proto3" json:"responseStatus,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
 func (m *Attempt) Reset()         { *m = Attempt{} }
@@ -959,21 +959,21 @@ func (m *Attempt) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Attempt proto.InternalMessageInfo
 
-func (m *Attempt) GetScheduleTime() *timestamp.Timestamp {
+func (m *Attempt) GetScheduleTime() *timestamppb.Timestamp {
 	if m != nil {
 		return m.ScheduleTime
 	}
 	return nil
 }
 
-func (m *Attempt) GetDispatchTime() *timestamp.Timestamp {
+func (m *Attempt) GetDispatchTime() *timestamppb.Timestamp {
 	if m != nil {
 		return m.DispatchTime
 	}
 	return nil
 }
 
-func (m *Attempt) GetResponseTime() *timestamp.Timestamp {
+func (m *Attempt) GetResponseTime() *timestamppb.Timestamp {
 	if m != nil {
 		return m.ResponseTime
 	}

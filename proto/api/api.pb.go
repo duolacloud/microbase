@@ -6,7 +6,7 @@ package api // import "github.com/duolacloud/microbase/proto/api"
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import any "github.com/golang/protobuf/ptypes/any"
+import anypb "google.golang.org/protobuf/types/known/anypb"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -20,12 +20,12 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type Status struct {
-	Code                 int32      `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
-	Message              string     `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	Details              []*any.Any `protobuf:"bytes,3,rep,name=details,proto3" json:"details,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
+	Code                 int32        `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Message              string       `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Details              []*anypb.Any `protobuf:"bytes,3,rep,name=details,proto3" json:"details,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
 func (m *Status) Reset()         { *m = Status{} }
@@ -66,7 +66,7 @@ func (m *Status) GetMessage() string {
 	return ""
 }
 
-func (m *Status) GetDetails() []*any.Any {
+func (m *Status) GetDetails() []*anypb.Any {
 	if m != nil {
 		return m.Details
 	}

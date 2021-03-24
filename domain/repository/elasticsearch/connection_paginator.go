@@ -36,6 +36,8 @@ func validateFirstLast(first, last *int) error {
 }
 
 func (p *ConnectionPaginator) Paginate(c context.Context, query *entity.ConnectionQuery, index, typ string) (conn *entity.Connection, err error) {
+	b, _ := json.Marshal(query.Orders)
+	log.Printf("Connection order: %v", string(b))
 	err = validateFirstLast(query.First, query.Last)
 	if err != nil {
 		return
@@ -81,7 +83,11 @@ func (p *ConnectionPaginator) Paginate(c context.Context, query *entity.Connecti
 
 	p.ensureOrders(&query.Orders)
 
-	cursorFilters, err := p.applyCursor(query)
+	searchService := p.client.Search().
+		Index(index).
+		Type(typ)
+
+	err = p.applyCursor(searchService, query)
 	if err != nil {
 		return nil, err
 	}
@@ -103,17 +109,13 @@ func (p *ConnectionPaginator) Paginate(c context.Context, query *entity.Connecti
 
 	rootFilters := make([]elastic.Query, 0)
 	rootFilters = append(rootFilters, filter)
-	rootFilters = append(rootFilters, cursorFilters...)
+	// rootFilters = append(rootFilters, cursorFilters...)
 
 	if len(query.Fields) > 0 {
 		// TODO 只获取指定字段
 	}
 
-	searchService := p.client.Search().
-		Index(index).
-		Type(typ).
-		Size(limit).
-		Query(elastic.NewBoolQuery().Filter(rootFilters...))
+	searchService.Size(limit).Query(elastic.NewBoolQuery().Filter(rootFilters...))
 
 	p.applyOrders(searchService, query.Orders, query.Last != nil)
 
@@ -132,14 +134,13 @@ func (p *ConnectionPaginator) Paginate(c context.Context, query *entity.Connecti
 		doc := &search.Document{
 			Index: index,
 			Type:  typ,
+			Sort:  r.Sort,
 		}
 
 		err = json.Unmarshal(*r.Source, &doc.Fields)
 		if err != nil {
 			return
 		}
-
-		log.Printf("docs[%d] = %v", i, string(*r.Source))
 
 		docs[i] = doc
 	}
@@ -185,7 +186,8 @@ func (p *ConnectionPaginator) Paginate(c context.Context, query *entity.Connecti
 		}
 
 		cursor := &entity.Cursor{
-			Value: orderFieldValues,
+			// Value: orderFieldValues,
+			Value: doc.Sort,
 		}
 
 		w := new(bytes.Buffer)
@@ -223,7 +225,7 @@ func (p *ConnectionPaginator) applyOrders(searchService *elastic.SearchService, 
 	log.Printf("applyOrders reverse: %v", reverse)
 	for _, order := range orders {
 		if reverse {
-			order.Direction = orders[0].Direction.Reverse()
+			order.Direction = order.Direction.Reverse()
 		}
 
 		asc := order.Direction != entity.OrderDirectionDesc
@@ -254,7 +256,52 @@ func (p *ConnectionPaginator) ensureOrders(orders *[]*entity.Order) {
 	}
 }
 
-func (p *ConnectionPaginator) applyCursor(query *entity.ConnectionQuery) ([]elastic.Query, error) {
+func (p *ConnectionPaginator) applyCursor(searchService *elastic.SearchService, query *entity.ConnectionQuery) error {
+	if query.After != nil {
+		if len(*query.After) != 0 {
+			cursor := &entity.Cursor{}
+			err := cursor.Unmarshal(*query.After)
+			if err != nil {
+				return err
+			}
+
+			if query.Orders != nil {
+				if len(cursor.Value) != len(query.Orders) {
+					return errors.New(fmt.Sprintf("cursor format fields length: %d not match orders fields length: %d", len(cursor.Value), len(query.Orders)))
+				}
+
+				searchService.SearchAfter(cursor.Value...)
+			}
+		}
+	}
+
+	if query.Before != nil {
+		if len(*query.Before) != 0 {
+			cursor := &entity.Cursor{}
+			err := cursor.Unmarshal(*query.Before)
+			if err != nil {
+				return err
+			}
+
+			if query.Orders != nil {
+				if len(cursor.Value) != len(query.Orders) {
+					return errors.New(fmt.Sprintf("cursor format fields length: %d not match orders fields length: %d", len(cursor.Value), len(query.Orders)))
+				}
+
+				searchService.SearchAfter(cursor.Value...)
+
+				/*
+					for _, order := range query.Orders {
+						order.Direction = order.Direction.Reverse()
+					}*/
+			}
+		}
+	}
+
+	return nil
+}
+
+func (p *ConnectionPaginator) applyCursor1(query *entity.ConnectionQuery) ([]elastic.Query, error) {
 	filters := make([]elastic.Query, 0)
 
 	if query.After != nil {

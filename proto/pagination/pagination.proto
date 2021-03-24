@@ -3,6 +3,7 @@ syntax = "proto3";
 package pagination;
 
 import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/duolacloud/microbase/proto/pagination;pagination";
 
@@ -25,14 +26,10 @@ message PageInfo {
 }
 
 message ConnectionQuery {
-  bool hasFirst = 1;
-  int32 first = 2;
-  bool hasLast = 3;
-  int32 last = 4;
-  bool hasAfter = 5;
-  string after = 6;
-  bool hasBefore = 7;
-  string before = 8;
+  google.protobuf.Int32Value first = 2;
+  google.protobuf.Int32Value last = 4;
+  google.protobuf.StringValue after = 6;
+  google.protobuf.StringValue before = 8;
   bool needTotal = 9;
   repeated string fields = 10;
   string filter = 11;

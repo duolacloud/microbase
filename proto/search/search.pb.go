@@ -7,7 +7,7 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import pagination "github.com/duolacloud/microbase/proto/pagination"
-import empty "github.com/golang/protobuf/ptypes/empty"
+import emptypb "google.golang.org/protobuf/types/known/emptypb"
 
 import (
 	context "golang.org/x/net/context"
@@ -1090,20 +1090,20 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type SearchServiceClient interface {
-	Create(ctx context.Context, in *Document, opts ...grpc.CallOption) (*empty.Empty, error)
-	Upsert(ctx context.Context, in *Document, opts ...grpc.CallOption) (*empty.Empty, error)
-	Update(ctx context.Context, in *Document, opts ...grpc.CallOption) (*empty.Empty, error)
+	Create(ctx context.Context, in *Document, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Upsert(ctx context.Context, in *Document, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Update(ctx context.Context, in *Document, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	BatchUpsert(ctx context.Context, in *BatchUpsertDocumentRequest, opts ...grpc.CallOption) (*BatchUpsertDocumentResponse, error)
 	Get(ctx context.Context, in *GetDocumentRequest, opts ...grpc.CallOption) (*Document, error)
 	BatchGet(ctx context.Context, in *BatchGetDocumentRequest, opts ...grpc.CallOption) (*BatchGetDocumentResponse, error)
-	Delete(ctx context.Context, in *DeleteDocumentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	Delete(ctx context.Context, in *DeleteDocumentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	Page(ctx context.Context, in *PageRequest, opts ...grpc.CallOption) (*PageResponse, error)
 	// graphql 查询模式查询结果
 	Connection(ctx context.Context, in *ConnectionRequest, opts ...grpc.CallOption) (*pagination.Connection, error)
-	CreateIndex(ctx context.Context, in *CreateIndexRequest, opts ...grpc.CallOption) (*empty.Empty, error)
-	DeleteIndex(ctx context.Context, in *DeleteIndexRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	CreateIndex(ctx context.Context, in *CreateIndexRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	DeleteIndex(ctx context.Context, in *DeleteIndexRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	IndexExists(ctx context.Context, in *IndexExistsRequest, opts ...grpc.CallOption) (*IndexExistsResponse, error)
 }
 
@@ -1115,8 +1115,8 @@ func NewSearchServiceClient(cc *grpc.ClientConn) SearchServiceClient {
 	return &searchServiceClient{cc}
 }
 
-func (c *searchServiceClient) Create(ctx context.Context, in *Document, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *searchServiceClient) Create(ctx context.Context, in *Document, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/search.SearchService/Create", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1124,8 +1124,8 @@ func (c *searchServiceClient) Create(ctx context.Context, in *Document, opts ...
 	return out, nil
 }
 
-func (c *searchServiceClient) Upsert(ctx context.Context, in *Document, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *searchServiceClient) Upsert(ctx context.Context, in *Document, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/search.SearchService/Upsert", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1133,8 +1133,8 @@ func (c *searchServiceClient) Upsert(ctx context.Context, in *Document, opts ...
 	return out, nil
 }
 
-func (c *searchServiceClient) Update(ctx context.Context, in *Document, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *searchServiceClient) Update(ctx context.Context, in *Document, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/search.SearchService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1169,8 +1169,8 @@ func (c *searchServiceClient) BatchGet(ctx context.Context, in *BatchGetDocument
 	return out, nil
 }
 
-func (c *searchServiceClient) Delete(ctx context.Context, in *DeleteDocumentRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *searchServiceClient) Delete(ctx context.Context, in *DeleteDocumentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/search.SearchService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1214,8 +1214,8 @@ func (c *searchServiceClient) Connection(ctx context.Context, in *ConnectionRequ
 	return out, nil
 }
 
-func (c *searchServiceClient) CreateIndex(ctx context.Context, in *CreateIndexRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *searchServiceClient) CreateIndex(ctx context.Context, in *CreateIndexRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/search.SearchService/CreateIndex", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1223,8 +1223,8 @@ func (c *searchServiceClient) CreateIndex(ctx context.Context, in *CreateIndexRe
 	return out, nil
 }
 
-func (c *searchServiceClient) DeleteIndex(ctx context.Context, in *DeleteIndexRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *searchServiceClient) DeleteIndex(ctx context.Context, in *DeleteIndexRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/search.SearchService/DeleteIndex", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1243,20 +1243,20 @@ func (c *searchServiceClient) IndexExists(ctx context.Context, in *IndexExistsRe
 
 // SearchServiceServer is the server API for SearchService service.
 type SearchServiceServer interface {
-	Create(context.Context, *Document) (*empty.Empty, error)
-	Upsert(context.Context, *Document) (*empty.Empty, error)
-	Update(context.Context, *Document) (*empty.Empty, error)
+	Create(context.Context, *Document) (*emptypb.Empty, error)
+	Upsert(context.Context, *Document) (*emptypb.Empty, error)
+	Update(context.Context, *Document) (*emptypb.Empty, error)
 	BatchUpsert(context.Context, *BatchUpsertDocumentRequest) (*BatchUpsertDocumentResponse, error)
 	Get(context.Context, *GetDocumentRequest) (*Document, error)
 	BatchGet(context.Context, *BatchGetDocumentRequest) (*BatchGetDocumentResponse, error)
-	Delete(context.Context, *DeleteDocumentRequest) (*empty.Empty, error)
+	Delete(context.Context, *DeleteDocumentRequest) (*emptypb.Empty, error)
 	Search(context.Context, *SearchRequest) (*SearchResponse, error)
 	List(context.Context, *ListRequest) (*ListResponse, error)
 	Page(context.Context, *PageRequest) (*PageResponse, error)
 	// graphql 查询模式查询结果
 	Connection(context.Context, *ConnectionRequest) (*pagination.Connection, error)
-	CreateIndex(context.Context, *CreateIndexRequest) (*empty.Empty, error)
-	DeleteIndex(context.Context, *DeleteIndexRequest) (*empty.Empty, error)
+	CreateIndex(context.Context, *CreateIndexRequest) (*emptypb.Empty, error)
+	DeleteIndex(context.Context, *DeleteIndexRequest) (*emptypb.Empty, error)
 	IndexExists(context.Context, *IndexExistsRequest) (*IndexExistsResponse, error)
 }
 

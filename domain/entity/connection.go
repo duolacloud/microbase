@@ -5,6 +5,7 @@ import (
 
 	"github.com/duolacloud/microbase/proto/pagination"
 	"github.com/thoas/go-funk"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type ConnectionQuery struct {
@@ -26,26 +27,28 @@ func ConnectionQueryFromPB(q *pagination.ConnectionQuery) *ConnectionQuery {
 
 	var first *int
 	var _first int
-	if q.HasFirst {
-		_first = int(q.First)
+	if q.First != nil {
+		_first = int(q.First.GetValue())
 		first = &_first
 	}
 
 	var last *int
 	var _last int
-	if q.HasLast {
-		_last = int(q.Last)
+	if q.Last != nil {
+		_last = int(q.Last.GetValue())
 		last = &_last
 	}
 
 	var after *string
-	if q.HasAfter {
-		after = &q.After
+	if q.After != nil {
+		_after := q.After.GetValue()
+		after = &_after
 	}
 
 	var before *string
-	if q.HasBefore {
-		before = &q.Before
+	if q.Before != nil {
+		_before := q.Before.GetValue()
+		before = &_before
 	}
 
 	return &ConnectionQuery{
@@ -95,23 +98,19 @@ func (c *ConnectionQuery) ToPB() *pagination.ConnectionQuery {
 	}
 
 	if c.First != nil {
-		pbquery.HasFirst = true
-		pbquery.First = int32(*c.First)
+		pbquery.First = wrapperspb.Int32(int32(*c.First))
 	}
 
 	if c.Last != nil {
-		pbquery.HasLast = true
-		pbquery.Last = int32(*c.Last)
+		pbquery.Last = wrapperspb.Int32(int32(*c.Last))
 	}
 
 	if c.Before != nil {
-		pbquery.HasBefore = true
-		pbquery.Before = *c.Before
+		pbquery.Before = wrapperspb.String(*c.Before)
 	}
 
 	if c.After != nil {
-		pbquery.HasAfter = true
-		pbquery.After = *c.After
+		pbquery.After = wrapperspb.String(*c.After)
 	}
 
 	return pbquery

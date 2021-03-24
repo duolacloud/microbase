@@ -9,4 +9,5 @@ type Document struct {
 	Index  string                 `json:"index"`
 	Type   string                 `json:"type"`
 	Fields map[string]interface{} `json:"fields"`
+	Sort   []interface{}          `json:"sort"`
 }
