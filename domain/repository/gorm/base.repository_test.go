@@ -187,10 +187,12 @@ func TestCrud(t *testing.T) {
 		}
 
 		items := make([]*User, 0)
-		total, pageCount, err := userRepo.Page(ctx, &User{}, pageQuery, &items)
+		total, err := userRepo.Page(ctx, &User{}, pageQuery, &items)
 		if assert.Error(err) {
 			t.Fatal(err)
 		}
+
+		pageCount := (total + 10 - 1) / 10
 
 		if assert.Equal(1, total) {
 			logger.Info("翻页查询正确")
@@ -217,16 +219,21 @@ func TestCrud(t *testing.T) {
 		logger.Info("删除记录成功")
 
 		items := make([]*User, 0)
-		total, pageCount, err := userRepo.Page(ctx, &User{}, &entity.PageQuery{
+		pageSize := 10
+		total, err := userRepo.Page(ctx, &User{}, &entity.PageQuery{
 			Filter:   map[string]interface{}{},
-			PageSize: 10,
+			PageSize: pageSize,
 			PageNo:   1,
 		}, &items)
+
+		pageCount := (int(total) + pageSize - 1) / pageSize
+
 		if assert.Error(err) {
 			t.Fatal(err)
 		}
 
 		assert.Equal(1, total)
+		assert.Equal(1, pageCount)
 		assert.Equal(1, len(items))
 
 		err = userRepo.Delete(ctx, &User{ID: user2.ID})
@@ -234,7 +241,7 @@ func TestCrud(t *testing.T) {
 		logger.Info("删除记录成功")
 
 		items = make([]*User, 0)
-		total, pageCount, err = userRepo.Page(ctx, &User{}, &entity.PageQuery{
+		total, err = userRepo.Page(ctx, &User{}, &entity.PageQuery{
 			Filter:   map[string]interface{}{},
 			PageSize: 10,
 			PageNo:   1,
@@ -398,4 +405,43 @@ func testConnectionPaginate(t *testing.T, repo repository.BaseRepository) {
 	}
 
 	logger.Info("游标查询成功")
+}
+
+func TestPape(t *testing.T) {
+	config, err := getConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tenancy, err := getTenancy(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userRepo := NewBaseRepository(repository.NewMultitenancyProvider(tenancy))
+
+	pageSize := 10
+	currentPage := 1
+	for {
+		pageQuery := &entity.PageQuery{
+			PageSize: pageSize,
+			PageNo:   currentPage,
+		}
+
+		items := make([]*User, 0)
+		total, err := userRepo.Page(context.TODO(), &User{}, pageQuery, &items)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		pageCount := (int(total) + 10 - 1) / 10
+
+		currentPage += 1
+		log.Printf("currentPage: %v, pageCount: %v, total: %v", currentPage, pageCount, total)
+
+		if currentPage >= pageCount {
+			break
+		}
+	}
+
 }

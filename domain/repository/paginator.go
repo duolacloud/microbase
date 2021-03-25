@@ -7,7 +7,7 @@ import (
 )
 
 type Paginator interface {
-	Paginate(c context.Context, query *entity.PageQuery, resultPtr interface{}) (total int, pageCount int, err error)
+	Paginate(c context.Context, query *entity.PageQuery, resultPtr interface{}) (total int64, err error)
 }
 
 type ConnectionPaginator interface {

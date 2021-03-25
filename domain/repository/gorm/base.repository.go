@@ -119,28 +119,9 @@ func (r *BaseRepository) Delete(c context.Context, m entity.Entity) error {
 }
 
 func (r *BaseRepository) Page(c context.Context, m entity.Entity, query *entity.PageQuery, resultPtr interface{}) (total int64, err error) {
-	db, err := r.DB(c)
-	if err != nil {
-		return
-	}
-	scope := db.NewScope(m)
-	table := r.DataSourceProvider.ProvideTable(c, scope.TableName())
+	paginator := NewPaginator(r.DataSourceProvider, m)
 
-	// items := breflect.MakeSlicePtr(m, 0, 0)
-	ms := db.NewScope(m).GetModelStruct()
-
-	dbHandler := db.Table(table)
-	dbHandler, err = applyFilter(dbHandler, ms, query.Filter)
-	if err != nil {
-		return
-	}
-
-	dbHandler, err = applyOrders(dbHandler, ms, query.Orders)
-	if err != nil {
-		return
-	}
-
-	total, err = pageQuery(dbHandler, query.PageNo, query.PageSize, resultPtr)
+	total, err = paginator.Paginate(c, query, resultPtr)
 
 	return
 }
