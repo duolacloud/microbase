@@ -1022,8 +1022,6 @@ github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca h1:1CFlNzQhALwjS9mB
 github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca/go.mod h1:ce1O1j6UtZfjr22oyGxGLbauSBp2YVXpARAosm7dHBg=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/xxl-job/go-client v0.0.4/go.mod h1:drWrCHorYqmdRVVoEZpY8ML/rcp7FJy+ouC6p3K2iEo=
-github.com/xxxmicro/base v0.1.35 h1:P6TbcR6QqoBCZt8+EkugYlNVfsct5xi55OE/oxvR+bM=
-github.com/xxxmicro/base v0.1.35/go.mod h1:Zuilpa0q1Iq+pngbqihK4Gbdw3YRK2pMIuLjmSbEVoM=
 github.com/xxxmicro/go-micro-apollo-plugin v1.1.4 h1:G4Dy/nQQMLvA7u7p/q7btQkarGsOtYVx7g4fGsuL4cw=
 github.com/xxxmicro/go-micro-apollo-plugin v1.1.4/go.mod h1:RUlvNaOFL5JMNL+oBUn/8jD5M2h3IVBp6X6r5bKoZng=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

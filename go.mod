@@ -44,7 +44,6 @@ require (
 	github.com/urfave/cli/v2 v2.2.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/vmihailenco/msgpack/v5 v5.2.0
-	github.com/xxxmicro/base v0.1.35
 	github.com/xxxmicro/go-micro-apollo-plugin v1.1.4
 	go.uber.org/fx v1.13.1
 	go.uber.org/zap v1.15.0 // indirect
