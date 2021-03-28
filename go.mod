@@ -6,8 +6,9 @@ require (
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
 	entgo.io/ent v0.6.0
 	github.com/coreos/etcd v3.3.18+incompatible
+	github.com/garyburd/redigo v1.6.2
 	github.com/gin-gonic/gin v1.6.3
-	github.com/go-git/go-git/v5 v5.1.0 // indirect
+	github.com/go-git/go-git/v5 v5.1.0
 	github.com/go-sql-driver/mysql v1.5.1-0.20200311113236-681ffa848bae
 	github.com/golang/protobuf v1.4.3
 	github.com/jinzhu/gorm v1.9.16
@@ -30,6 +31,7 @@ require (
 	github.com/olivere/elastic/v6 v6.2.1
 	github.com/olivere/elastic/v7 v7.0.22
 	github.com/opentracing/opentracing-go v1.2.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
 	github.com/prometheus/common v0.9.1
