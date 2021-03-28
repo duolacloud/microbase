@@ -92,6 +92,17 @@ func (m *RedisCache) String() string {
 	return "redis"
 }
 
+func (m *RedisCache) Exists(key string) bool {
+	c := m.r.Get()
+	defer c.Close()
+	exists, err := redis.Bool(c.Do("EXISTS", key))
+	if err != nil {
+		return false
+	}
+
+	return exists
+}
+
 func (m *RedisCache) Get(key string, resultPtr interface{}, opts ...cache.ReadOption) bool {
 	readOpts := cache.ReadOptions{}
 	for _, o := range opts {

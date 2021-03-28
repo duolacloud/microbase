@@ -6,4 +6,5 @@ type Cache interface {
 	Get(key string, resultPtr interface{}, opts ...ReadOption) bool
 	Set(key string, value interface{}, opts ...WriteOption) error
 	Delete(key string, opts ...DeleteOption) error
+	Exists(key string) bool
 }

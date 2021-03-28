@@ -53,6 +53,11 @@ func (m *MemoryCache) String() string {
 	return "memory"
 }
 
+func (m *MemoryCache) Exists(key string) bool {
+	_, ok := m.cache.Get(key)
+	return ok
+}
+
 func (m *MemoryCache) Get(key string, resultPtr interface{}, opts ...cache.ReadOption) bool {
 	readOpts := cache.ReadOptions{}
 	for _, o := range opts {
