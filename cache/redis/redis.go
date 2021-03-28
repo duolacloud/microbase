@@ -82,6 +82,9 @@ func (m *RedisCache) connect() (*redis.Pool, error) {
 }
 
 func (m *RedisCache) prefix(key string) string {
+	if m.options.Prefix == "" {
+		return key
+	}
 	return fmt.Sprintf("%s:%s", m.options.Prefix, key)
 }
 

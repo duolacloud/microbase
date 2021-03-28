@@ -12,6 +12,12 @@ type Options struct {
 
 type Option func(o *Options)
 
+func WritePrefix(prefix string) Option {
+	return func(w *Options) {
+		w.Prefix = prefix
+	}
+}
+
 type ReadOptions struct {
 }
 

@@ -43,6 +43,9 @@ func (m *MemoryCache) Options() cache.Options {
 }
 
 func (m *MemoryCache) prefix(key string) string {
+	if m.options.Prefix == "" {
+		return key
+	}
 	return fmt.Sprintf("%s:%s", m.options.Prefix, key)
 }
 
